@@ -22,6 +22,17 @@ export class ContentPipeline {
     this.publisher = new PublisherAgent();
   }
 
+  // Public helper to fetch topics without exposing internals
+  async fetchTopics(): Promise<{ success: boolean; topics: import('./types').ContentTopic[]; onChainData: import('./types').OnChainData | null; error?: string }> {
+    try {
+      const res = await this.researcher.research();
+      if (!res.success || !res.data) return { success: false, topics: [], onChainData: null, error: res.error };
+      return { success: true, topics: res.data.topics, onChainData: res.data.onChainData };
+    } catch (e) {
+      return { success: false, topics: [], onChainData: null, error: e instanceof Error ? e.message : 'Unknown error' };
+    }
+  }
+
   async generateContent(): Promise<{
     success: boolean;
     contentPackages: ContentPackage[];

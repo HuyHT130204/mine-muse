@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ContentPackage, ContentTopic, OnChainData } from '@/lib/types';
 
 interface RealTimeGeneratorProps {

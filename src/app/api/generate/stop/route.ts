@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 type GenStore = {
   logs: string[];
   done: boolean;
-  result: any | null;
+  result: unknown | null;
 };
 
 const g = globalThis as unknown as { __gen__?: GenStore };

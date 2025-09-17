@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { modelManager } from '@/lib/model-manager';
 import { ContentPipeline } from '@/lib/pipeline';
 
-export async function GET(request: NextRequest) {
+export async function GET(): Promise<NextResponse> {
   try {
     console.log('🧪 Testing model rotation...');
     
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🧪 Testing content generation with model rotation...');
     

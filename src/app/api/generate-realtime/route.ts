@@ -6,7 +6,8 @@ import { ContentTopic } from '@/lib/types';
 
 export const runtime = 'edge';
 
-export async function POST(req: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_req: NextRequest) {
   console.log('🚀 API: Starting real-time content generation...');
   
   const pipeline = new ContentPipeline();
@@ -14,17 +15,17 @@ export async function POST(req: NextRequest) {
   const repurposer = new RepurposerAgent();
   
   try {
-    // Get topics first
-    const researchResult = await pipeline.researcher.research();
-    if (!researchResult.success || !researchResult.data) {
+    // Get topics via pipeline's public method
+    const topicRes = await pipeline.fetchTopics();
+    if (!topicRes.success) {
       return NextResponse.json({ 
         success: false, 
         error: 'Failed to research topics' 
       });
     }
 
-    const topics: ContentTopic[] = researchResult.data.topics;
-    const onChainData = researchResult.data.onChainData;
+    const topics: ContentTopic[] = topicRes.topics;
+    const onChainData = topicRes.onChainData!;
 
     // Create a TransformStream for real-time generation
     const { readable, writable } = new TransformStream();
