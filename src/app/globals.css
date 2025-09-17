@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* removed unsupported @theme block */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Professional typography: headings and brand only */
+:root {
+  --font-heading: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --font-brand: 'Dancing Script', cursive;
+}
+
+h1, h2, h3, h4, .mm-heading { font-family: var(--font-heading); letter-spacing: -0.01em; }
+.font-brand { font-family: var(--font-brand); letter-spacing: 0.005em; }
+
+/* Motion system and utilities */
+:root {
+  --surface: #ffffff;
+  --surface-muted: #f7f7f8;
+  --border: #e5e7eb;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.08);
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 380ms;
+  --ease-standard: cubic-bezier(0.2, 0.0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.7, 0, 1);
+}
+
+@keyframes mm-fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes mm-slide-up { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes mm-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes mm-shine { 0% { transform: translateX(-120%); } 100% { transform: translateX(220%); } }
+@keyframes mm-pulse { 0%,100% { opacity: .85; transform: translateY(0) } 50% { opacity: 1; transform: translateY(-1px) } }
+@keyframes mm-snow-fall { 0% { transform: translateY(-110%); opacity: 0 } 10% { opacity: .95 } 100% { transform: translateY(160%); opacity: 0 } }
+@keyframes mm-snow-fall-2 { 0% { transform: translateY(-120%); opacity: 0 } 10% { opacity: .85 } 100% { transform: translateY(180%); opacity: 0 } }
+@keyframes mm-breathe { 0%,100% { box-shadow: 0 10px 20px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.2) } 50% { box-shadow: 0 14px 24px rgba(37,99,235,.42), inset 0 1px 0 rgba(255,255,255,.24) } }
+
+.mm-transition { transition: all var(--duration-base) var(--ease-standard); }
+.mm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); }
+.mm-card:hover { box-shadow: var(--shadow-md); }
+.mm-focus:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.mm-shimmer { background: linear-gradient(90deg, #eef2f7 25%, #f7f9fc 37%, #eef2f7 63%); background-size: 400% 100%; animation: mm-shimmer 1.4s linear infinite; }
+
+/* 3D CTA button */
+.mm-cta3d { position: relative; border-radius: 10px; color: #fff; transform: translateZ(0); transition: transform var(--duration-base) var(--ease-emphasized), box-shadow var(--duration-base) var(--ease-standard); overflow: hidden; animation: mm-breathe 3s ease-in-out infinite; }
+.mm-cta3d::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 60%); pointer-events: none; }
+.mm-cta3d .mm-cta-gloss { position: absolute; top: 0; left: -30%; height: 100%; width: 30%; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.7) 50%, rgba(255,255,255,0) 100%); filter: blur(2px); animation: mm-shine 2.4s ease-in-out infinite; pointer-events: none; opacity: .9; }
+.mm-cta3d:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(37,99,235,.38), inset 0 1px 0 rgba(255,255,255,.25); }
+.mm-cta3d:active { transform: translateY(0); box-shadow: 0 8px 16px rgba(37,99,235,.32), inset 0 1px 0 rgba(255,255,255,.2); }
+
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important } }
+
+/* Animated action chips */
+.mm-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 9999px; background: #111827; color: #fff; font-size: 12px; font-weight: 600; box-shadow: 0 6px 16px rgba(17,24,39,.12); cursor: default; overflow: hidden; isolation: isolate; }
+.mm-chip .mm-chip-glow { position: absolute; inset: -20%; background: radial-gradient(60% 60% at 20% 0%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%); animation: mm-shine 2.2s ease-in-out infinite; opacity: .9; pointer-events: none; }
+.mm-chip-secondary { background: linear-gradient(90deg, #1f2937, #374151); }
+.mm-chip-tertiary { background: linear-gradient(90deg, #0f766e, #2563eb); }
+.mm-chip-label { letter-spacing: .02em; }
+
+/* Bookmark toggle */
+.mm-bookmark { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #4b5563; background: #ffffff; border: 1px solid #e5e7eb; transition: all var(--duration-base) var(--ease-standard); box-shadow: var(--shadow-sm); }
+.mm-bookmark:hover { color: #111827; background: #f8fafc; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.mm-bookmark--active { color: #111827; background: #fde68a; border-color: #f59e0b; box-shadow: 0 10px 20px rgba(245, 158, 11, .25); animation: mm-pulse 1.6s var(--ease-emphasized) infinite; }
+
+/* Snowfall decorative layer (straight down) */
+.mm-snow { position: absolute; inset: 0; }
+.mm-snow::before, .mm-snow::after { content: ""; position: absolute; inset: 0; background-repeat: repeat; pointer-events: none; }
+.mm-snow::before { background-image: radial-gradient(3px 3px at 10% -10%, rgba(224,242,254,1) 60%, rgba(224,242,254,0) 61%), radial-gradient(3px 3px at 40% -20%, rgba(224,242,254,1) 60%, rgba(224,242,254,0) 61%), radial-gradient(3px 3px at 70% -15%, rgba(224,242,254,1) 60%, rgba(224,242,254,0) 61%), radial-gradient(3px 3px at 90% -5%, rgba(224,242,254,1) 60%, rgba(224,242,254,0) 61%); background-size: 180px 140px; animation: mm-snow-fall 8s linear infinite; opacity: .6; }
+.mm-snow::after { background-image: radial-gradient(2px 2px at 20% -10%, rgba(186,230,253,1) 60%, rgba(186,230,253,0) 61%), radial-gradient(2px 2px at 60% -15%, rgba(186,230,253,1) 60%, rgba(186,230,253,0) 61%), radial-gradient(2px 2px at 80% -5%, rgba(186,230,253,1) 60%, rgba(186,230,253,0) 61%); background-size: 160px 120px; animation: mm-snow-fall-2 10s linear infinite; opacity: .5; }
+
+/* Shooting stars removed */

@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 300
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_SITE_NAME": "mine-muse"
+  }
+}
+
+

@@ -1,0 +1,144 @@
+import { createClient, type SupabaseClient, type User, type AuthChangeEvent, type Session } from '@supabase/supabase-js';
+
+function getClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
+  const key = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_KEY || process.env.SUPABASE_KEY) as string | undefined;
+  if (!url || !key) {
+    console.warn('Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env');
+    return null;
+  }
+  // Persist session in browser so users stay logged in
+  return createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+}
+
+export interface SavedPost {
+  id?: string;
+  article_id?: string | null;
+  channel: string;
+  content: string;
+  created_at?: string;
+  published?: boolean;
+  user_id?: string | null;
+}
+
+export interface ArticleRow {
+  id: string; // uuid
+  title: string;
+  url?: string | null;
+  summary?: string | null;
+  published_at?: string | null;
+  user_id?: string | null;
+}
+
+// Auth helpers
+export async function signUpWithEmail(email: string, password: string, redirectTo?: string) {
+  const client = getClient();
+  if (!client) return { data: null, error: new Error('Supabase not configured') };
+  return client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  const client = getClient();
+  if (!client) return { data: null, error: new Error('Supabase not configured') };
+  return client.auth.signInWithPassword({ email, password });
+}
+
+export async function signOut() {
+  const client = getClient();
+  if (!client) return { error: new Error('Supabase not configured') } as const;
+  return client.auth.signOut();
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const client = getClient();
+  if (!client) return null;
+  const { data } = await client.auth.getUser();
+  return data.user ?? null;
+}
+
+type AuthSubscription = { data: { subscription: { unsubscribe: () => void } } };
+export function onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void): AuthSubscription {
+  const client = getClient();
+  if (!client) return { data: { subscription: { unsubscribe: () => {} } } };
+  return client.auth.onAuthStateChange(callback) as unknown as AuthSubscription;
+}
+
+// OAuth: Google
+export async function signInWithGoogle(redirectTo?: string) {
+  const client = getClient();
+  if (!client) return { data: null, error: new Error('Supabase not configured') };
+  return client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+}
+
+// Resend email confirmation
+export async function resendConfirmationEmail(email: string) {
+  const client = getClient();
+  if (!client) return { data: null, error: new Error('Supabase not configured') };
+  // Uses the new v2 API: re-send signup email
+  return client.auth.resend({ type: 'signup', email });
+}
+
+export async function savePlatformPosts(posts: SavedPost[]): Promise<{ success: boolean; error?: string }>{
+  if (!posts || posts.length === 0) return { success: true };
+  const client = getClient();
+  if (!client) return { success: false, error: 'Supabase is not configured' };
+  const { data: userRes } = await client.auth.getUser();
+  const userId = userRes.user?.id ?? null;
+  if (!userId) return { success: false, error: 'Not authenticated' };
+  const isUuid = (value: string | null | undefined): value is string =>
+    typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const sanitized = posts.map((p) => ({
+    ...p,
+    // Ensure uuid type or set null to let DB accept it
+    article_id: isUuid(p.article_id) ? p.article_id : null,
+    // Default published to false if undefined
+    published: typeof p.published === 'boolean' ? p.published : false,
+    user_id: userId,
+  }));
+
+  const { error } = await client.from('posts').insert(sanitized);
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function fetchRecentPosts(limit = 100): Promise<SavedPost[]> {
+  const client = getClient();
+  if (!client) return [];
+  const { data: userRes } = await client.auth.getUser();
+  const userId = userRes.user?.id ?? null;
+  if (!userId) {
+    // When not authenticated, do not query with an empty UUID
+    return [];
+  }
+  const query = client
+    .from('posts')
+    .select('id, article_id, channel, content, created_at, published')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  const { data, error } = await query.eq('user_id', userId);
+  if (error) {
+    console.error('Supabase fetchRecentPosts error:', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function saveArticles(articles: ArticleRow[]): Promise<{ success: boolean; error?: string }>{
+  if (!articles || articles.length === 0) return { success: true };
+  const client = getClient();
+  if (!client) return { success: false, error: 'Supabase is not configured' };
+  const { data: userRes } = await client.auth.getUser();
+  const userId = userRes.user?.id ?? null;
+  if (!userId) return { success: false, error: 'Not authenticated' };
+  const withUser = articles.map((a) => ({ ...a, user_id: userId }));
+  const { error } = await client.from('articles').insert(withUser);
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+
