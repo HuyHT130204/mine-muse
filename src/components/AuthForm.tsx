@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function AuthForm({ onSuccess }: Props) {
-  const [email] = useState('Schofield.eth@gmail.com'); // Fixed email, cannot be changed
+  const [email] = useState('huyht1302@gmail.com'); // Fixed email, cannot be changed
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -239,7 +239,7 @@ export default function AuthForm({ onSuccess }: Props) {
     try {
       const { error } = await resetPassword(email);
       if (error) throw error;
-      setInfo('Password reset email sent to Schofield.eth@gmail.com');
+      setInfo('Password reset email sent to huyht1302@gmail.com');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'message' in err) {
         const msg = (err as { message?: string }).message || 'Failed to send reset email';
@@ -320,7 +320,7 @@ export default function AuthForm({ onSuccess }: Props) {
                   value={email}
                   disabled
                   className="w-full rounded-lg border border-gray-300/80 bg-gray-50 px-3.5 py-2.5 text-[14px] text-gray-500 cursor-not-allowed"
-                  placeholder="Schofield.eth@gmail.com"
+                  placeholder="huyht1302@gmail.com"
                 />
                 <p className="text-xs text-gray-500 mt-1">This email is fixed and cannot be changed</p>
               </div>

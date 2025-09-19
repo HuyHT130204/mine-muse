@@ -37,7 +37,7 @@ export async function signInWithEmail(email: string, password: string) {
   if (!client) return { data: null, error: new Error('Supabase not configured') };
   
   // Only allow specific email
-  if (email !== 'Schofield.eth@gmail.com') {
+  if (email !== 'huyht1302@gmail.com') {
     return { 
       data: null, 
       error: new Error('Access denied. Only authorized users can sign in.') 
@@ -58,16 +58,27 @@ export async function resetPassword(email: string) {
   if (!client) return { data: null, error: new Error('Supabase not configured') };
   
   // Only allow reset for specific email
-  if (email !== 'Schofield.eth@gmail.com') {
+  if (email !== 'huyht1302@gmail.com') {
     return { 
       data: null, 
       error: new Error('Access denied. Only authorized users can reset password.') 
     };
   }
   
-  return client.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`
-  });
+  try {
+    const result = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`
+    });
+    
+    console.log('Reset password result:', result);
+    return result;
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error('Failed to send reset email') 
+    };
+  }
 }
 
 export async function getCurrentUser(): Promise<User | null> {
