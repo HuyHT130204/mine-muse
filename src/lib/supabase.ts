@@ -37,7 +37,7 @@ export async function signInWithEmail(email: string, password: string) {
   if (!client) return { data: null, error: new Error('Supabase not configured') };
   
   // Only allow specific email
-  if (email !== 'huyht1302@gmail.com') {
+  if (email !== 'Schofield.eth@gmail.com') {
     return { 
       data: null, 
       error: new Error('Access denied. Only authorized users can sign in.') 
@@ -64,7 +64,7 @@ export async function resetPassword(email: string) {
   if (!client) return { data: null, error: new Error('Supabase not configured') };
   
   // Only allow reset for specific email
-  if (email !== 'huyht1302@gmail.com') {
+  if (email !== 'Schofield.eth@gmail.com') {
     return { 
       data: null, 
       error: new Error('Access denied. Only authorized users can reset password.') 

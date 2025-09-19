@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 export default function TestResetPage() {
-  const [email, setEmail] = useState('huyht1302@gmail.com');
+  const [email, setEmail] = useState('Schofield.eth@gmail.com');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
