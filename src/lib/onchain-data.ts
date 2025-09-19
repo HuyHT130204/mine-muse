@@ -1,7 +1,7 @@
 // On-chain data collection for Bitcoin mining content
 
 import axios from 'axios';
-import { OnChainData, ContentTopic } from './types';
+import { OnChainData, ContentTopic, ComprehensiveData } from './types';
 import { CONFIG } from './config';
 
 export class OnChainDataCollector {
@@ -86,28 +86,28 @@ export class OnChainDataCollector {
 
   private getMockBitcoinData(): OnChainData {
     return {
-      bitcoinPrice: 45000,
-      difficulty: 95000000000000,
-      hashrate: 450e18, // 450 EH/s
-      blockReward: 6.25,
-      transactionFees: 0.5,
+      bitcoinPrice: 0,
+      difficulty: 0,
+      hashrate: 0,
+      blockReward: 0,
+      transactionFees: 0,
       mempoolStats: {
-        pendingTxs: 5000,
-        avgFeeRate: 15,
-        congestionLevel: 'medium'
+        pendingTxs: 0,
+        avgFeeRate: 0,
+        congestionLevel: 'low'
       },
       minerRevenue: {
-        daily: 2000000,
-        monthly: 60000000,
-        yearly: 730000000
+        daily: 0,
+        monthly: 0,
+        yearly: 0
       },
       blockStats: {
-        avgBlockTime: 600,
-        avgBlockSize: 1500000,
-        totalBlocks: 850000
+        avgBlockTime: 0,
+        avgBlockSize: 0,
+        totalBlocks: 0
       },
       timestamp: new Date().toISOString(),
-      source: 'mock-data'
+      source: 'empty'
     };
   }
 
@@ -152,7 +152,7 @@ export class OnChainDataCollector {
       if (cached) {
         return cached;
       }
-      return { price: 115000 }; // Fallback price
+      return { price: 0 }; // Empty data
     }
   }
 
@@ -181,11 +181,11 @@ export class OnChainDataCollector {
       };
     } catch (error) {
       console.error('Error fetching mempool stats:', error);
-      // Return reasonable defaults instead of zeros
+      // Return empty data
       return {
-        pendingTxs: 5000,
-        avgFeeRate: 15,
-        congestionLevel: 'medium'
+        pendingTxs: 0,
+        avgFeeRate: 0,
+        congestionLevel: 'low'
       };
     }
   }
@@ -232,7 +232,11 @@ export class OnChainDataCollector {
         { timeout: 10000 }
       );
 
-      const blockReward = 6.25; // Current block reward after halving
+      // Compute current block subsidy based on halving schedule (every 210,000 blocks)
+      const halvingInterval = 210000;
+      const halvings = Math.floor(latestHeight / halvingInterval);
+      const initialSubsidy = 50; // BTC
+      const blockReward = Number((initialSubsidy / Math.pow(2, Math.max(0, halvings))).toFixed(8));
       const transactionFees = blockData.data.fee || 0;
       
       // Calculate average block time (simplified)
@@ -251,14 +255,14 @@ export class OnChainDataCollector {
       };
     } catch (error) {
       console.error('Error fetching block data:', error);
-      // Return reasonable defaults
+      // Return empty data
       return {
-        blockReward: 6.25,
-        transactionFees: 0.5,
+        blockReward: 0,
+        transactionFees: 0,
         blockStats: {
-          avgBlockTime: 600,
-          avgBlockSize: 1500000,
-          totalBlocks: 850000
+          avgBlockTime: 0,
+          avgBlockSize: 0,
+          totalBlocks: 0
         }
       };
     }
@@ -306,8 +310,8 @@ export class OnChainDataCollector {
         return { difficulty: diffAdj.data.difficulty };
       }
 
-      // Fallback 2: return previous safe default
-      return { difficulty: 95e12 };
+      // Return empty data
+      return { difficulty: 0 };
     } catch {
       console.warn('Primary difficulty lookup failed, trying mempool.space fallback...');
       try {
@@ -321,7 +325,7 @@ export class OnChainDataCollector {
       } catch (fallbackError) {
         console.error('Error fetching difficulty data (all sources):', fallbackError);
       }
-      return { difficulty: 95e12 };
+      return { difficulty: 0 };
     }
   }
 
@@ -345,7 +349,7 @@ export class OnChainDataCollector {
         }
       } catch {}
 
-      // 2) Fallback: mempool 3d
+      // 2) Fallback: mempool 3d (values commonly in EH/s)
       if (!Number.isFinite(value as number)) {
         try {
           const response = await axios.get(
@@ -359,8 +363,11 @@ export class OnChainDataCollector {
             const obj = latest as Record<string, unknown>;
             valueRaw = obj.hashrate ?? obj.avgHashrate ?? obj.v ?? obj.value ?? null;
           }
-          const parsed = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
-          if (Number.isFinite(parsed)) value = parsed;
+          let parsed = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
+          if (Number.isFinite(parsed)) {
+            if (parsed < 1e9) parsed = parsed * 1e18; // EH/s -> H/s
+            value = parsed;
+          }
         } catch {}
       }
 
@@ -378,8 +385,11 @@ export class OnChainDataCollector {
             const obj = latest as Record<string, unknown>;
             valueRaw = obj.hashrate ?? obj.avgHashrate ?? obj.v ?? obj.value ?? null;
           }
-          const parsed = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
-          if (Number.isFinite(parsed)) value = parsed;
+          let parsed = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
+          if (Number.isFinite(parsed)) {
+            if (parsed < 1e9) parsed = parsed * 1e18; // EH/s -> H/s
+            value = parsed;
+          }
         } catch {}
       }
 
@@ -441,7 +451,8 @@ export class OnChainDataCollector {
       } catch (fallbackErr) {
         console.error('Hashrate derivation fallback failed:', fallbackErr);
       }
-      // If everything fails, return 0 so UI shows N/A
+      // If everything fails, return empty data
+      console.warn('All hashrate sources failed, using empty data');
       return { hashrate: 0 };
     }
   }
@@ -452,9 +463,18 @@ export class OnChainDataCollector {
     yearly: number;
   }> {
     try {
-      // Calculate based on block reward and current price
+      // Calculate based on current block reward (derived from latest height) and current price
       const priceData = await this.getBitcoinPrice();
-      const blockReward = 6.25;
+      let blockReward = 3.125;
+      try {
+        const tip = await axios.get(`${this.mempoolUrl}/blocks/tip/height`, { timeout: 8000 });
+        const latestHeight = Number(tip.data || 0);
+        if (Number.isFinite(latestHeight) && latestHeight > 0) {
+          const halvings = Math.floor(latestHeight / 210000);
+          const initialSubsidy = 50;
+          blockReward = initialSubsidy / Math.pow(2, Math.max(0, halvings));
+        }
+      } catch {}
       const blocksPerDay = 144; // 24 * 60 / 10
       const blocksPerMonth = blocksPerDay * 30;
       const blocksPerYear = blocksPerDay * 365;
@@ -470,11 +490,11 @@ export class OnChainDataCollector {
       };
     } catch (error) {
       console.error('Error calculating miner revenue:', error);
-      // Return reasonable defaults based on $45k BTC price
+      // Return empty data
       return {
-        daily: 2000000,
-        monthly: 60000000,
-        yearly: 730000000
+        daily: 0,
+        monthly: 0,
+        yearly: 0
       };
     }
   }
@@ -482,57 +502,151 @@ export class OnChainDataCollector {
   async generateContentTopics(onChainData: OnChainData): Promise<ContentTopic[]> {
     const topics: ContentTopic[] = [];
 
+    // Create empty comprehensive data to force Claude to search
+    const emptyComprehensiveData: ComprehensiveData = {
+      onChain: onChainData,
+      sustainability: {
+        carbonFootprint: {
+          bitcoinNetwork: 0,
+          renewableEnergyPercentage: 0,
+          cleanEnergyMining: 0
+        },
+        energyConsumption: {
+          totalNetworkConsumption: 0,
+          renewableEnergyUsage: 0,
+          gridStabilization: {
+            frequencyRegulation: 0,
+            demandResponse: 0
+          }
+        },
+        dataCenterMetrics: {
+          pue: 0,
+          carbonIntensity: 0,
+          renewableEnergyRatio: 0
+        },
+        miningEconomics: {
+          electricityCosts: {
+            globalAverage: 0,
+            renewableEnergyCost: 0,
+            traditionalEnergyCost: 0
+          },
+          profitabilityMetrics: {
+            breakEvenPrice: 0,
+            profitMargin: 0,
+            roi: 0
+          }
+        },
+        timestamp: new Date().toISOString(),
+        source: 'empty'
+      },
+      trends: {
+        socialMediaTrends: {
+          twitter: {
+            hashtags: [],
+            sentiment: 'neutral' as const,
+            engagement: 0,
+            reach: 0
+          },
+          reddit: {
+            subreddits: [],
+            sentiment: 'neutral' as const,
+            upvotes: 0
+          },
+          linkedin: {
+            posts: 0,
+            sentiment: 'neutral' as const,
+            engagement: 0
+          },
+          youtube: {
+            videos: 0,
+            views: 0,
+            sentiment: 'neutral' as const
+          }
+        },
+        searchTrends: {
+          google: {
+            keywords: [],
+            searchVolume: [],
+            relatedQueries: []
+          },
+          youtube: {
+            trendingVideos: [],
+            viewCounts: []
+          }
+        },
+        newsSentiment: {
+          headlines: [],
+          sentiment: 'neutral' as const,
+          sources: []
+        },
+        institutionalAdoption: {
+          corporateTreasury: 0,
+          etfFlows: 0,
+          regulatoryUpdates: []
+        },
+        timestamp: new Date().toISOString(),
+        source: 'empty'
+      },
+      timestamp: new Date().toISOString()
+    };
+
     // Always generate 5 topics based on current on-chain data
     topics.push({
       id: `difficulty-${Date.now()}`,
       title: 'Bitcoin Mining Difficulty Analysis',
       description: `Current difficulty: ${onChainData.difficulty?.toLocaleString() || 'N/A'}`,
-      onChainData,
+      comprehensiveData: emptyComprehensiveData,
       keywords: ['difficulty', 'mining', 'adjustment', 'hashrate'],
       difficulty: 'intermediate',
-      category: 'technical'
+      category: 'technical',
+      focusAreas: ['mining-difficulty', 'network-security']
     });
 
     topics.push({
       id: `price-impact-${Date.now()}`,
       title: 'Bitcoin Price Impact on Mining Profitability',
       description: `Current price: $${onChainData.bitcoinPrice?.toLocaleString() || 'N/A'}`,
-      onChainData,
+      comprehensiveData: emptyComprehensiveData,
       keywords: ['price', 'profitability', 'mining', 'economics'],
       difficulty: 'beginner',
-      category: 'economic'
+      category: 'economic',
+      focusAreas: ['mining-economics', 'price-analysis']
     });
 
     topics.push({
       id: `mempool-${Date.now()}`,
       title: 'Mempool Congestion and Transaction Fees',
       description: `Pending transactions: ${onChainData.mempoolStats?.pendingTxs?.toLocaleString() || 'N/A'}`,
-      onChainData,
+      comprehensiveData: emptyComprehensiveData,
       keywords: ['mempool', 'fees', 'congestion', 'transactions'],
       difficulty: 'advanced',
-      category: 'technical'
+      category: 'technical',
+      focusAreas: ['network-congestion', 'transaction-fees']
     });
 
     topics.push({
       id: `revenue-${Date.now()}`,
       title: 'Daily Mining Revenue Analysis',
       description: `Daily revenue: $${onChainData.minerRevenue?.daily?.toLocaleString() || 'N/A'}`,
-      onChainData,
+      comprehensiveData: emptyComprehensiveData,
       keywords: ['revenue', 'mining', 'daily', 'profitability'],
       difficulty: 'intermediate',
-      category: 'economic'
+      category: 'economic',
+      focusAreas: ['mining-revenue', 'profitability']
     });
 
     topics.push({
       id: `hashrate-${Date.now()}`,
       title: 'Network Hash Rate Trends',
       description: `Current hashrate: ${onChainData.hashrate ? `${(onChainData.hashrate / 1e18).toFixed(2)} EH/s` : 'N/A'}`,
-      onChainData,
+      comprehensiveData: emptyComprehensiveData,
       keywords: ['hashrate', 'network', 'security', 'mining'],
       difficulty: 'intermediate',
-      category: 'technical'
+      category: 'technical',
+      focusAreas: ['network-hashrate', 'mining-security']
     });
 
     return topics.slice(0, CONFIG.CONTENT.MAX_TOPICS_PER_RUN);
   }
 }
+  

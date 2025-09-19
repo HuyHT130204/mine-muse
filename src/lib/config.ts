@@ -4,10 +4,11 @@ export const CONFIG = {
   // Content generation settings
   CONTENT: {
     MONTHLY_TARGET: 20,
-    MAX_TOPICS_PER_RUN: 5,
+    MAX_TOPICS_PER_RUN: 20,
     MIN_UNIQUENESS_SCORE: 0.85,
     MAX_READABILITY_GRADE: 12,
     MAX_PASSIVE_VOICE: 0.1,
+    USE_NUMERIC_METRICS: process.env.USE_NUMERIC_METRICS !== 'false',
   },
 
   // Platform character limits
@@ -74,7 +75,7 @@ export const CONFIG = {
       // Removed HF usage; keeping keys for compatibility where referenced
       OPENROUTER: process.env.OPENROUTER_MODEL || 'openrouter/sonoma-dusk-alpha',
       OPENAI: 'gpt-4',
-      CLAUDE: 'claude-3-sonnet-20240229',
+      CLAUDE: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20240620',
     },
     EMBEDDINGS: {
       PROVIDER: process.env.EMBEDDINGS_PROVIDER || 'hf',
@@ -134,6 +135,10 @@ export const CONFIG = {
       'Block Production',
       'Network Security',
       'Mining Pool Dynamics',
+      'Data Center Infrastructure',
+      'HPC Optimization',
+      'Grid Stabilization',
+      'Quantum Resistance',
     ],
     ECONOMIC: [
       'Mining Profitability',
@@ -142,6 +147,10 @@ export const CONFIG = {
       'Market Cycles',
       'Investment Strategies',
       'Risk Management',
+      'Electricity Cost Optimization',
+      'ROI Analysis',
+      'Break-even Calculations',
+      'Treasury Asset Allocation',
     ],
     MARKET: [
       'Price Impact on Mining',
@@ -150,6 +159,29 @@ export const CONFIG = {
       'Regulatory Updates',
       'Global Mining Trends',
       'Energy Consumption',
+      'Corporate Bitcoin Adoption',
+      'ETF Flows',
+      'Institutional Investment',
+    ],
+    SUSTAINABILITY: [
+      'Sustainable Data Centers',
+      'Carbon Footprint Reduction',
+      'Renewable Energy Integration',
+      'Clean Energy Mining',
+      'Environmental Impact',
+      'Green Computing',
+      'Ethical AI Practices',
+      'Sustainable Computing',
+    ],
+    TRENDS: [
+      'Social Media Sentiment',
+      'Search Trend Analysis',
+      'News Sentiment',
+      'Institutional Adoption',
+      'Regulatory Developments',
+      'Market Trends',
+      'Technology Trends',
+      'Industry Evolution',
     ],
   },
 } as const;

@@ -25,7 +25,7 @@ export async function POST(_req: NextRequest) {
     }
 
     const topics: ContentTopic[] = topicRes.topics;
-    const onChainData = topicRes.onChainData!;
+    const onChainData = topicRes.comprehensiveData?.onChain || null;
 
     // Create a TransformStream for real-time generation
     const { readable, writable } = new TransformStream();

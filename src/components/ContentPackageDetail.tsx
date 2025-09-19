@@ -107,19 +107,16 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[mm-fade-in_var(--duration-slow)_var(--ease-standard)]">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden animate-[mm-slide-up_var(--duration-slow)_var(--ease-emphasized)]">
+    <div className="fixed inset-0 z-50 p-4 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[mm-fade-in_var(--duration-slow)_var(--ease-standard)]">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1200px] max-h-[92vh] overflow-hidden animate-[mm-slide-up_var(--duration-slow)_var(--ease-emphasized)]">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">{contentPackage.longForm.title}</h2>
+        <div className="px-6 py-5 border-b border-gray-100 sticky top-0 z-10 bg-white/95 backdrop-blur">
+          <div className="flex items-start justify-between gap-6">
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold text-gray-900 truncate">{contentPackage.longForm.title}</h2>
               <p className="text-gray-500 text-sm mt-1">Created: {formatDate(contentPackage.createdAt)}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors mm-focus"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors mm-focus">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -127,19 +124,26 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex h-[calc(92vh-120px)]">
-          {/* Left Panel - Long Form Content */}
-          <div className="w-1/2 p-6 border-r border-gray-100 overflow-y-auto">
-            <div className="space-y-6">
+        {/* Body layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h:[calc(92vh-80px)] h-[calc(92vh-80px)] min-h-0">
+          {/* Left Panel - Longform */}
+          <div className="border-r border-gray-100 flex flex-col min-h-0">
+            <div className="px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-[5]">
+              <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Long Form Article</h3>
+            </div>
+            <div className="flex-1 px-6 py-5 overflow-y-auto min-h-0">
+              <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Long Form Article</h3>
-                <div className="bg-gray-50 rounded-xl p-5 mm-card">
-                  <h4 className="font-semibold text-gray-900 mb-2">{contentPackage.longForm.title}</h4>
-                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                    {contentPackage.longForm.body}
+                {contentPackage.longForm?.body ? (
+                  <div className="bg-gray-50 rounded-xl p-5 mm-card">
+                    <h4 className="font-semibold text-gray-900 mb-2">{contentPackage.longForm.title}</h4>
+                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                      {contentPackage.longForm.body}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-xl p-5 border border-dashed border-gray-200 text-gray-500 text-sm">No article content available</div>
+                )}
               </div>
 
               {/* Key Insights */}
@@ -173,42 +177,47 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
               {/* Metadata */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Content Metrics</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-gray-50 p-3 rounded-lg mm-card">
-                    <span className="font-medium">Word Count:</span> {contentPackage.longForm.metadata.wordCount}
+                    <div className="text-gray-500">Word Count</div>
+                    <div className="text-gray-900 font-medium">{contentPackage.longForm.metadata?.wordCount ?? 0}</div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg mm-card">
-                    <span className="font-medium">Reading Time:</span> {contentPackage.longForm.metadata.readingTime} min
+                    <div className="text-gray-500">Reading Time</div>
+                    <div className="text-gray-900 font-medium">{contentPackage.longForm.metadata?.readingTime ?? 0} min</div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg mm-card">
-                    <span className="font-medium">Difficulty:</span> Grade {contentPackage.longForm.metadata.difficulty.toFixed(1)}
+                    <div className="text-gray-500">Difficulty</div>
+                    <div className="text-gray-900 font-medium">{typeof contentPackage.longForm.metadata?.difficulty === 'number' ? `Grade ${contentPackage.longForm.metadata.difficulty.toFixed(1)}` : 'N/A'}</div>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg mm-card">
-                    <span className="font-medium">Industry Terms:</span> {contentPackage.longForm.metadata.industryTerms}
+                    <div className="text-gray-500">Industry Terms</div>
+                    <div className="text-gray-900 font-medium">{contentPackage.longForm.metadata?.industryTerms ?? 0}</div>
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>
 
-          {/* Right Panel - Platform Content */}
-          <div className="w-1/2 flex flex-col">
-            {/* Platform Navigation */}
-            <div className="p-4 border-b border-gray-100">
+          {/* Right Panel - Platforms */}
+          <div className="flex flex-col min-h-0">
+            {/* Tabs */}
+            <div className="px-6 py-3 border-b border-gray-100 sticky top-0 bg-white z-[5]">
               <div className="flex items-center justify-between">
-                <div className="flex space-x-1.5">
+                <div className="flex gap-1.5">
                   {platforms.map((platform, index) => (
                     <button
                       key={platform}
                       onClick={() => setCurrentSlide(index)}
                       aria-label={platform}
-                      className={`h-9 px-3 rounded-md text-sm font-medium transition-colors ${
+                      className={`h-8 px-3 rounded-full text-sm font-medium transition-all ${
                         currentSlide === index
                           ? 'bg-gray-900 text-white shadow-sm'
                           : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                       }`}
                     >
-                      {getPlatformIcon(platform)} {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      {getPlatformIcon(platform)}
                     </button>
                   ))}
                 </div>
@@ -237,7 +246,7 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
             </div>
 
             {/* Platform Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 px-6 py-5 overflow-y-auto min-h-0">
               {currentContent ? (
                 <div className="space-y-4 animate-[mm-fade-in_var(--duration-base)_var(--ease-standard)]">
                   {/* Platform Header */}
@@ -254,7 +263,7 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
                   {/* Content */}
                   <div className="bg-gray-50 rounded-xl p-5 mm-card">
                     <div className="whitespace-pre-wrap text-gray-900 leading-relaxed min-h-[200px]">
-                      {currentContent.content}
+                      {currentContent.content || 'No content available for this platform'}
                     </div>
                   </div>
 
@@ -314,6 +323,9 @@ export default function ContentPackageDetail({ contentPackage, onClose }: Conten
                             <span className="font-medium text-purple-800">Engagement:</span>
                             <p className="text-purple-700 mt-1">{currentContent.metadata.engagement}</p>
                           </div>
+                        )}
+                        {!currentContent.metadata.hook && !currentContent.metadata.cta && !currentContent.metadata.engagement && (
+                          <div className="text-gray-500">No additional post details</div>
                         )}
                       </div>
                     </div>

@@ -7,7 +7,7 @@ import { ContentPackage, PlatformContent } from '@/lib/types';
 import { useAutoFetchData } from '@/hooks/useAutoFetchData';
 import Image from 'next/image';
 import React from 'react';
-import { savePlatformPosts, saveArticles, fetchRecentPosts, getCurrentUser, signOut } from '@/lib/supabase';
+import { savePlatformPosts, saveArticles, fetchRecentPosts, getCurrentUser, signOut, fetchArticlesByIds } from '@/lib/supabase';
 import AuthForm from '@/components/AuthForm';
 import GeneratingWireframe from '@/components/GeneratingWireframe';
 // ModelRotationStatus removed
@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [authed, setAuthed] = useState<boolean>(false);
   
   // Auto-fetch data every 2 minutes to avoid rate limiting
-  const { data: onChainData, loading: dataLoading, error: dataError, lastUpdated } = useAutoFetchData({
+  const { data: comprehensiveData, loading: dataLoading, error: dataError, lastUpdated } = useAutoFetchData({
     interval: 120000, // 2 minutes
     enabled: true
   });
@@ -137,6 +137,10 @@ export default function Dashboard() {
       groups.set(`${Date.now()}-${Math.random().toString(36).slice(2)}`, tempBatch);
     }
 
+    // Fetch related article rows to enrich longform
+    const relatedArticleIds = Array.from(groups.keys()).filter(Boolean);
+    const articlesMap = await fetchArticlesByIds(relatedArticleIds as string[]);
+
     const orderedPackages: ContentPackage[] = Array.from(groups.entries()).map(([key, gp]) => {
       const byCreated = gp.slice().sort((a, b) => (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0));
       const newest = byCreated[0];
@@ -148,26 +152,118 @@ export default function Dashboard() {
         mediaUrls: [],
         hashtags: [],
         characterCount: (platformMap.get(pf) || '').length,
-        metadata: {},
+        metadata: {
+          // rudimentary metadata based on content
+          hook: (platformMap.get(pf) || '').split(/[.!?]/)[0]?.slice(0, 120) || undefined,
+        },
       }));
+      const article = key ? articlesMap[key] : undefined;
+      const derivedTitle = article?.title || 'Mine‑Muse';
+      const derivedBody = article?.summary || byCreated.map((p)=>p.content).join('\n\n');
+      const wordCount = (derivedTitle + ' ' + derivedBody).trim().split(/\s+/).filter(Boolean).length;
       const pkg: ContentPackage = {
         id: key || (newest?.id ?? Math.random().toString(36).slice(2)),
         longForm: {
-          title: 'Mine‑Muse',
-          body: '',
-          onChainData: {
-            bitcoinPrice: 0,
-            difficulty: 0,
-            hashrate: 0,
-            blockReward: 0,
-            transactionFees: 0,
-            mempoolStats: { pendingTxs: 0, avgFeeRate: 0, congestionLevel: '' },
-            minerRevenue: { daily: 0, monthly: 0, yearly: 0 },
-            blockStats: { avgBlockTime: 0, avgBlockSize: 0, totalBlocks: 0 },
-            timestamp: new Date().toISOString(),
-            source: 'supabase',
+          title: derivedTitle,
+          body: derivedBody,
+          comprehensiveData: {
+            onChain: {
+              bitcoinPrice: 0,
+              difficulty: 0,
+              hashrate: 0,
+              blockReward: 0,
+              transactionFees: 0,
+              mempoolStats: { pendingTxs: 0, avgFeeRate: 0, congestionLevel: '' },
+              minerRevenue: { daily: 0, monthly: 0, yearly: 0 },
+              blockStats: { avgBlockTime: 0, avgBlockSize: 0, totalBlocks: 0 },
+              timestamp: new Date().toISOString(),
+              source: 'supabase',
+            },
+            sustainability: {
+              carbonFootprint: {
+                bitcoinNetwork: 0,
+                renewableEnergyPercentage: 0,
+                cleanEnergyMining: 0
+              },
+              energyConsumption: {
+                totalNetworkConsumption: 0,
+                renewableEnergyUsage: 0,
+                gridStabilization: {
+                  frequencyRegulation: 0,
+                  demandResponse: 0
+                }
+              },
+              dataCenterMetrics: {
+                pue: 0,
+                carbonIntensity: 0,
+                renewableEnergyRatio: 0
+              },
+              miningEconomics: {
+                electricityCosts: {
+                  globalAverage: 0,
+                  renewableEnergyCost: 0,
+                  traditionalEnergyCost: 0
+                },
+                profitabilityMetrics: {
+                  breakEvenPrice: 0,
+                  profitMargin: 0,
+                  roi: 0
+                }
+              },
+              timestamp: new Date().toISOString(),
+              source: 'empty'
+            },
+            trends: {
+              socialMediaTrends: {
+                twitter: {
+                  hashtags: [],
+                  sentiment: 'neutral' as const,
+                  engagement: 0,
+                  reach: 0
+                },
+                reddit: {
+                  subreddits: [],
+                  sentiment: 'neutral' as const,
+                  upvotes: 0
+                },
+                linkedin: {
+                  posts: 0,
+                  sentiment: 'neutral' as const,
+                  engagement: 0
+                },
+                youtube: {
+                  videos: 0,
+                  views: 0,
+                  sentiment: 'neutral' as const
+                }
+              },
+              searchTrends: {
+                google: {
+                  keywords: [],
+                  searchVolume: [],
+                  relatedQueries: []
+                },
+                youtube: {
+                  trendingVideos: [],
+                  viewCounts: []
+                }
+              },
+              newsSentiment: {
+                headlines: [],
+                sentiment: 'neutral' as const,
+                sources: []
+              },
+              institutionalAdoption: {
+                corporateTreasury: 0,
+                etfFlows: 0,
+                regulatoryUpdates: []
+              },
+              timestamp: new Date().toISOString(),
+              source: 'empty'
+            },
+            timestamp: new Date().toISOString()
           },
-          metadata: { wordCount: 0, readingTime: 0, difficulty: 0, passiveVoice: 0, industryTerms: 0 },
+          metadata: { wordCount, readingTime: Math.ceil(wordCount / 200), difficulty: 0, passiveVoice: 0, industryTerms: 0, focusAreas: ['mining', 'sustainability'] },
         },
         platforms,
         status: 'draft',
@@ -252,9 +348,12 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {onChainData && (
+              {comprehensiveData && (
                 <>
-                <h2 className="text-sm font-semibold text-gray-900 tracking-wide mb-3">Live Mining Metrics</h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-900 tracking-wide">Live Mining Metrics</h2>
+                  <a href="https://mempool.space/api" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800">Source</a>
+                </div>
                 <div className="flex items-center justify-between mb-2 text-[11px] text-gray-500">
                   {dataLoading && (
                     <span className="inline-flex items-center space-x-1"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span><span>Updating</span></span>
@@ -262,13 +361,14 @@ export default function Dashboard() {
                   {lastUpdated && <span>{lastUpdated.toLocaleTimeString()}</span>}
                 </div>
                 <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100 overflow-hidden mm-card">
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Price</span><span className="font-semibold text-gray-900">${onChainData.bitcoinPrice?.toLocaleString() || 'N/A'}</span></li>
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Difficulty</span><span className="font-semibold text-gray-900">{onChainData.difficulty ? (onChainData.difficulty / 1e12).toFixed(1) + 'T' : 'N/A'}</span></li>
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Hashrate</span><span className="font-semibold text-gray-900">{Number.isFinite(onChainData.hashrate) && onChainData.hashrate > 0 ? `${(onChainData.hashrate / 1e18).toFixed(1)} EH/s` : 'N/A'}</span></li>
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Reward</span><span className="font-semibold text-gray-900">{onChainData.blockReward || 'N/A'} BTC</span></li>
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Revenue</span><span className="font-semibold text-gray-900">{onChainData.minerRevenue?.daily ? `$${(onChainData.minerRevenue.daily / 1e6).toFixed(1)}M` : 'N/A'}</span></li>
-                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Mempool</span><span className="font-semibold text-gray-900">{onChainData.mempoolStats?.pendingTxs ? `${(onChainData.mempoolStats.pendingTxs / 1000).toFixed(1)}K` : 'N/A'}</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Price</span><span className="font-semibold text-gray-900">${comprehensiveData.onChain.bitcoinPrice?.toLocaleString() || 'N/A'}</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Difficulty</span><span className="font-semibold text-gray-900">{comprehensiveData.onChain.difficulty ? (comprehensiveData.onChain.difficulty / 1e12).toFixed(1) + 'T' : 'N/A'}</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Hashrate</span><span className="font-semibold text-gray-900">{Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(1)} EH/s` : 'N/A'}</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Reward</span><span className="font-semibold text-gray-900">{comprehensiveData.onChain.blockReward || 'N/A'} BTC</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Revenue</span><span className="font-semibold text-gray-900">{comprehensiveData.onChain.minerRevenue?.daily ? `$${(comprehensiveData.onChain.minerRevenue.daily / 1e6).toFixed(1)}M` : 'N/A'}</span></li>
+                  <li className="flex items-center justify-between px-3 py-2 text-sm"><span className="text-gray-500">Mempool</span><span className="font-semibold text-gray-900">{comprehensiveData.onChain.mempoolStats?.pendingTxs ? `${(comprehensiveData.onChain.mempoolStats.pendingTxs / 1000).toFixed(1)}K` : 'N/A'}</span></li>
                 </ul>
+
 
                 {/* CTA below metrics */}
                 <div className="mt-4">
@@ -289,7 +389,7 @@ export default function Dashboard() {
                 </div>
                 </>
               )}
-              {(!onChainData || dataLoading) && (
+              {(!comprehensiveData || dataLoading) && (
                 <div className="mt-2">
                   <div className="h-4 w-40 mm-shimmer rounded mb-3" />
                   <div className="mm-card divide-y divide-gray-100">
@@ -422,41 +522,33 @@ export default function Dashboard() {
             )}
           </main>
 
-          {/* Right sidebar: How it works */}
+          {/* Right sidebar: Compact Metrics */}
           <aside className="order-3 text-[13px] animate-[mm-slide-up_var(--duration-slow)_var(--ease-emphasized)]">
-            <div className="lg:sticky lg:top-6">
-              {/* Generate button moved to left metrics */}
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">How It Works</h2>
-              <div className="space-y-3">
-                <div className="flex items-start space-x-2">
-                  <div className="w-5 h-5 bg-gray-900 text-white rounded-full flex items-center justify-center text-[11px] font-medium">1</div>
-                  <div className="leading-snug">
-                    <div className="font-medium text-gray-900">Fetch Real Data</div>
-                    <div className="text-gray-500">Get live Bitcoin mining data from blockchain</div>
+            <div className="lg:sticky lg:top-6 space-y-4">
+              {/* Sources-only view: remove Sustainability cards */}
+              {comprehensiveData && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-gray-900 tracking-wide">Sources</h2>
                   </div>
+                  {(() => { const prov = comprehensiveData.provenance?.sustainability; const links: string[] = [] as string[];
+                    if (prov?.renewable?.url) links.push(prov.renewable.url);
+                    if (prov?.pue?.url) links.push(prov.pue.url);
+                    if (prov?.carbon?.url) links.push(prov.carbon.url);
+                    if (prov?.breakEven?.url) links.push(prov.breakEven.url);
+                    const news = Array.isArray(comprehensiveData.trends.newsSentiment.sources) ? comprehensiveData.trends.newsSentiment.sources.slice(0,8) : [];
+                    const all = Array.from(new Set([...links, ...news]));
+                    return (
+                      <div className="text-xs text-gray-600">
+                        <ul className="space-y-1 list-disc pl-5">
+                          {all.map((u, i) => (
+                            <li key={`src-${i}`}><a href={u} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">{u}</a></li>
+                          ))}
+                        </ul>
+                      </div>
+                    ); })()}
                 </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-5 h-5 bg-gray-900 text-white rounded-full flex items-center justify-center text-[11px] font-medium">2</div>
-                  <div className="leading-snug">
-                    <div className="font-medium text-gray-900">Generate Content</div>
-                    <div className="text-gray-500">AI creates professional articles and social posts</div>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-5 h-5 bg-gray-900 text-white rounded-full flex items-center justify-center text-[11px] font-medium">3</div>
-                  <div className="leading-snug">
-                    <div className="font-medium text-gray-900">Multi-Platform</div>
-                    <div className="text-gray-500">Each article becomes 4 platform posts</div>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-5 h-5 bg-gray-900 text-white rounded-full flex items-center justify-center text-[11px] font-medium">4</div>
-                  <div className="leading-snug">
-                    <div className="font-medium text-gray-900">Professional Quality</div>
-                    <div className="text-gray-500">No emojis, expert tone, industry terms</div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </aside>
         </div>

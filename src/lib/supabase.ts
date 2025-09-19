@@ -142,3 +142,23 @@ export async function saveArticles(articles: ArticleRow[]): Promise<{ success: b
 }
 
 
+// Fetch articles by a set of ids, returns a map for easy lookup
+export async function fetchArticlesByIds(ids: string[]): Promise<Record<string, ArticleRow>> {
+  const result: Record<string, ArticleRow> = {};
+  if (!ids || ids.length === 0) return result;
+  const client = getClient();
+  if (!client) return result;
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  if (unique.length === 0) return result;
+  const { data, error } = await client
+    .from('articles')
+    .select('id, title, url, summary, published_at, user_id')
+    .in('id', unique);
+  if (error || !data) return result;
+  for (const row of data) {
+    result[row.id] = row as ArticleRow;
+  }
+  return result;
+}
+
+

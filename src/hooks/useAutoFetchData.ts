@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { OnChainData } from '@/lib/types';
+import { ComprehensiveData } from '@/lib/types';
 
 interface UseAutoFetchDataOptions {
   interval?: number; // milliseconds
@@ -10,7 +10,7 @@ interface UseAutoFetchDataOptions {
 
 export function useAutoFetchData(options: UseAutoFetchDataOptions = {}) {
   const { interval = 30000, enabled = true } = options; // Default 30 seconds
-  const [data, setData] = useState<OnChainData | null>(null);
+  const [data, setData] = useState<ComprehensiveData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -28,7 +28,7 @@ export function useAutoFetchData(options: UseAutoFetchDataOptions = {}) {
       if (result.success && result.data) {
         setData(result.data);
         setLastUpdated(new Date());
-        console.log('✅ Auto-fetched on-chain data:', result.data);
+        console.log('✅ Auto-fetched comprehensive data:', result.data);
       } else {
         setError(result.error || 'Failed to fetch data');
       }
