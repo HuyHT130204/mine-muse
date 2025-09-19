@@ -50,6 +50,12 @@ export async function signInWithEmail(email: string, password: string) {
 export async function signOut() {
   const client = getClient();
   if (!client) return { error: new Error('Supabase not configured') } as const;
+  
+  // Clear reset link usage when signing out
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('reset_link_used');
+  }
+  
   return client.auth.signOut();
 }
 
