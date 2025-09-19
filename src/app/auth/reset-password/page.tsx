@@ -23,10 +23,21 @@ export default function ResetPasswordPage() {
       );
 
       try {
+        // Check if link was already used
+        const linkUsedBefore = localStorage.getItem('reset_link_used');
+        if (linkUsedBefore === 'permanent') {
+          setError('This reset link has already been used. Please request a new password reset.');
+          setIsValidLink(false);
+          setLinkUsed(true);
+          return;
+        }
+
         // Check if we have tokens in URL
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
+        
+        console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
         
         // Check if this is a password recovery link
         if (type === 'recovery' && accessToken && refreshToken) {
@@ -46,25 +57,26 @@ export default function ResetPasswordPage() {
           // Check if user is authenticated
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            console.log('User authenticated:', user.email);
             setIsValidLink(true);
-            // Store that this link is being used
-            localStorage.setItem('reset_link_used', 'true');
+            // Store that this link is being used (temporarily)
+            localStorage.setItem('reset_link_used', 'temporary');
           } else {
             setError('Invalid reset link. Please request a new password reset.');
             setIsValidLink(false);
           }
         } else {
-          // Check if link was already used
-          const linkUsedBefore = localStorage.getItem('reset_link_used');
-          if (linkUsedBefore) {
-            setError('This reset link has already been used. Please request a new password reset.');
+          // Try to get current session (might be set automatically by Supabase)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            console.log('Session found:', session.user.email);
+            setIsValidLink(true);
+            // Store that this link is being used (temporarily)
+            localStorage.setItem('reset_link_used', 'temporary');
+          } else {
+            setError('Invalid reset link. Please request a new password reset.');
             setIsValidLink(false);
-            setLinkUsed(true);
-            return;
           }
-          
-          setError('Invalid reset link. Please request a new password reset.');
-          setIsValidLink(false);
         }
       } catch (err) {
         console.error('Reset link check error:', err);
@@ -75,6 +87,16 @@ export default function ResetPasswordPage() {
 
     checkResetLink();
   }, [searchParams]);
+
+  // Clear temporary tracking when component unmounts (user leaves page)
+  useEffect(() => {
+    return () => {
+      const linkUsed = localStorage.getItem('reset_link_used');
+      if (linkUsed === 'temporary') {
+        localStorage.removeItem('reset_link_used');
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +110,9 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    // Check if link was already used
-    if (linkUsed) {
+    // Check if link was permanently used
+    const linkUsedBefore = localStorage.getItem('reset_link_used');
+    if (linkUsedBefore === 'permanent') {
       setError('This reset link has already been used. Please request a new password reset.');
       setLoading(false);
       return;
