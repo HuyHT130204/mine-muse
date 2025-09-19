@@ -92,7 +92,7 @@ export class AutoFillManager {
     try {
       await navigator.clipboard.writeText(text);
       return { success: true, message: 'Content copied to clipboard! Paste it in Instagram app.' };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Failed to copy to clipboard. Please copy manually.' };
     }
   }
@@ -101,7 +101,7 @@ export class AutoFillManager {
     try {
       await navigator.clipboard.writeText(text);
       return { success: true, message: 'Content copied to clipboard!' };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Failed to copy to clipboard.' };
     }
   }

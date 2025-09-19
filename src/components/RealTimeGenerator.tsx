@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ContentPackage, ContentTopic, OnChainData } from '@/lib/types';
+import { ContentPackage, ContentTopic } from '@/lib/types';
 
 interface RealTimeGeneratorProps {
   onComplete: (contentPackages: ContentPackage[]) => void;
@@ -60,10 +60,57 @@ const RealTimeGenerator: React.FC<RealTimeGeneratorProps> = ({ onComplete }) => 
                   id: data.data.topicId,
                   title: data.data.topicTitle,
                   description: '',
-                  onChainData: {} as OnChainData,
+                  comprehensiveData: {
+                    onChain: {
+                      bitcoinPrice: 0,
+                      difficulty: 0,
+                      hashrate: 0,
+                      blockReward: 0,
+                      transactionFees: 0,
+                      mempoolStats: { pendingTxs: 0, avgFeeRate: 0, congestionLevel: 'low' },
+                      minerRevenue: { daily: 0, monthly: 0, yearly: 0 },
+                      blockStats: { avgBlockTime: 0, avgBlockSize: 0, totalBlocks: 0 },
+                      timestamp: new Date().toISOString(),
+                      source: 'empty'
+                    },
+                    sustainability: {
+                      carbonFootprint: { bitcoinNetwork: 0, renewableEnergyPercentage: 0, cleanEnergyMining: 0 },
+                      energyConsumption: { totalNetworkConsumption: 0, renewableEnergyUsage: 0, gridStabilization: { frequencyRegulation: 0, demandResponse: 0 } },
+                      dataCenterMetrics: { pue: 0, carbonIntensity: 0, renewableEnergyRatio: 0 },
+                      miningEconomics: { electricityCosts: { globalAverage: 0, renewableEnergyCost: 0, traditionalEnergyCost: 0 }, profitabilityMetrics: { breakEvenPrice: 0, profitMargin: 0, roi: 0 } },
+                      timestamp: new Date().toISOString(),
+                      source: 'empty'
+                    },
+                    trends: {
+                      socialMediaTrends: { 
+                        twitter: { hashtags: [], sentiment: 'neutral', engagement: 0, reach: 0 }, 
+                        reddit: { subreddits: [], sentiment: 'neutral', upvotes: 0 }, 
+                        linkedin: { posts: 0, sentiment: 'neutral', engagement: 0 }, 
+                        youtube: { videos: 0, views: 0, sentiment: 'neutral' } 
+                      },
+                      searchTrends: { 
+                        google: { keywords: [], searchVolume: [], relatedQueries: [] }, 
+                        youtube: { trendingVideos: [], viewCounts: [] } 
+                      },
+                      newsSentiment: { 
+                        headlines: [], 
+                        sentiment: 'neutral', 
+                        sources: [] 
+                      },
+                      institutionalAdoption: { 
+                        corporateTreasury: 0, 
+                        etfFlows: 0, 
+                        regulatoryUpdates: [] 
+                      },
+                      timestamp: new Date().toISOString(),
+                      source: 'empty'
+                    },
+                    timestamp: new Date().toISOString()
+                  },
                   keywords: [],
                   difficulty: 'intermediate',
-                  category: 'technical'
+                  category: 'technical',
+                  focusAreas: []
                 });
                 setCurrentContent('');
                 setProgress(prev => ({ ...prev, total: data.data.topicIndex + 1 }));
