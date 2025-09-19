@@ -16,7 +16,7 @@ interface ContentPackageCardProps {
 
 export default function ContentPackageCard({ contentPackage, onViewDetails, label, onToggleSave, isSaved }: ContentPackageCardProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const platforms = ['twitter', 'linkedin', 'instagram', 'facebook'];
+  const platforms = ['twitter', 'linkedin', 'social', 'ceo'];
   
   const currentPlatform = platforms[currentSlide];
   const currentContent = contentPackage.platforms.find(p => p.platform === currentPlatform);
@@ -40,19 +40,16 @@ export default function ContentPackageCard({ contentPackage, onViewDetails, labe
       case 'linkedin':
         AutoFillManager.openLinkedInWithContent(options);
         break;
-      case 'facebook':
+      case 'social':
         try {
           AutoFillManager.openFacebookWithContent(options);
         } catch {
-          // Fallback to clipboard if Facebook sharing fails
-          AutoFillManager.copyToClipboardForFacebook(options).then(result => {
-            alert(result.message);
-          });
+          const result = await AutoFillManager.copyToClipboardForFacebook(options);
+          alert(result.message);
         }
         break;
-      case 'instagram':
-        const result = await AutoFillManager.copyToClipboardForInstagram(options);
-        alert(result.message);
+      case 'ceo':
+        AutoFillManager.openLinkedInWithContent(options);
         break;
     }
   };
@@ -76,38 +73,33 @@ export default function ContentPackageCard({ contentPackage, onViewDetails, labe
         return <Image src="/X.png" alt="X" width={size} height={size} />;
       case 'linkedin':
         return <Image src="/LinkedIn.png" alt="LinkedIn" width={size} height={size} />;
-      case 'facebook':
-        return <Image src="/facebook.png" alt="Facebook" width={size} height={size} />;
-      case 'instagram':
-        return <Image src="/Instagram.png" alt="Instagram" width={size} height={size} />;
+      case 'social':
+        return <Image src="/facebook.png" alt="Social" width={size} height={size} />;
+      case 'ceo':
+        return <Image src="/ceo.png" alt="CEO" width={size} height={size} />;
       default:
         return <span className="text-[10px] font-semibold">{platform.charAt(0).toUpperCase()}</span>;
     }
   };
 
-  const getPlatformImageSrc = (platform: string): string | null => {
-    switch (platform) {
+  const getPlatformImageSrc = (p: string): string | null => {
+    switch (p) {
       case 'twitter':
         return '/X.png';
       case 'linkedin':
         return '/LinkedIn.png';
-      case 'facebook':
+      case 'social':
         return '/facebook.png';
-      case 'instagram':
-        return '/Instagram.png';
+      case 'ceo':
+        return '/ceo.png';
       default:
         return null;
     }
   };
 
-  const getPlatformColor = (platform: string) => {
-    switch (platform) {
-      case 'twitter': return 'bg-gray-900 text-white';
-      case 'linkedin': return 'bg-blue-600 text-white';
-      case 'instagram': return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
-      case 'facebook': return 'bg-blue-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
+  const getPlatformColor = () => {
+    // Monochrome black & white theme
+    return 'bg-gray-900 text-white';
   };
 
   // decorative meteor styles now set inline where used
@@ -203,7 +195,7 @@ export default function ContentPackageCard({ contentPackage, onViewDetails, labe
             <div className="space-y-4 animate-[mm-fade-in_var(--duration-base)_var(--ease-standard)]">
               {/* Platform Header */}
               <div className="flex items-center space-x-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getPlatformColor(currentPlatform)}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getPlatformColor()}`}>
                   {getPlatformIcon(currentPlatform)}
                 </div>
                 <span className="font-semibold text-gray-900 capitalize">{currentPlatform}</span>

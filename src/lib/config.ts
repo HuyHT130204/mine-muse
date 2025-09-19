@@ -4,7 +4,7 @@ export const CONFIG = {
   // Content generation settings
   CONTENT: {
     MONTHLY_TARGET: 20,
-    MAX_TOPICS_PER_RUN: 20,
+    MAX_TOPICS_PER_RUN: 5,
     MIN_UNIQUENESS_SCORE: 0.85,
     MAX_READABILITY_GRADE: 12,
     MAX_PASSIVE_VOICE: 0.1,

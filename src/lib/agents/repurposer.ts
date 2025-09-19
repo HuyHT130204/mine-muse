@@ -58,11 +58,37 @@ export class RepurposerAgent {
     }
   }
 
+  // CEO perspective format
+  private async createCEOContent(content: LongFormContent): Promise<PlatformContent> {
+    try {
+      if (this.llm) {
+        const prompt = this.buildCEOPrompt(content);
+        const response = await this.llm.invoke(prompt);
+        const ceoContent = typeof response === 'string' ? response : (response && typeof response === 'object' && 'content' in response ? String((response as { content?: unknown }).content ?? '') : String(response ?? ''));
+        return {
+          platform: 'ceo',
+          content: ceoContent.trim(),
+          characterCount: ceoContent.length,
+          metadata: {
+            hook: this.extractHook(ceoContent),
+            cta: ''
+          }
+        };
+      }
+      // Fallback mock
+      const fallback = `Từ góc nhìn điều hành: hiệu suất ASIC chậm lại đang buộc chúng tôi chuyển giá trị sang tận dụng nhiệt thải, tối ưu trung tâm dữ liệu và hợp đồng năng lượng linh hoạt. Đây không phải là câu chuyện marketing; đó là P&L và vận hành. Những đội nhóm gắn kết được kỹ thuật năng lượng và hạ tầng số sẽ có lợi thế chu kỳ tới.`;
+      return { platform: 'ceo', content: fallback, characterCount: fallback.length, metadata: { hook: fallback.split('.')[0] + '.', cta: '' } };
+    } catch {
+      const fallback = `Từ góc nhìn điều hành: hiệu suất ASIC chậm lại đang buộc chúng tôi chuyển giá trị sang tận dụng nhiệt thải, tối ưu trung tâm dữ liệu và hợp đồng năng lượng linh hoạt.`;
+      return { platform: 'ceo', content: fallback, characterCount: fallback.length, metadata: { hook: fallback.split('.')[0] + '.', cta: '' } };
+    }
+  }
+
   async repurposeContent(content: LongFormContent): Promise<RepurposeResult> {
     const startTime = Date.now();
     
     try {
-      console.log('🔄 Repurposer Agent: Converting content for 4 platforms');
+      console.log('🔄 Repurposer Agent: Converting content for 4 formats (twitter, linkedin, social, ceo)');
       
       // Alternate OpenRouter models across requests if enabled
       if (process.env.OPENROUTER_API_KEY && CONFIG.AI.MODEL_ROTATION.ENABLED) {
@@ -87,8 +113,8 @@ export class RepurposerAgent {
       const platforms: PlatformContent[] = await Promise.all([
         this.createTwitterContent(content),
         this.createLinkedInContent(content),
-        this.createInstagramContent(content),
-        this.createFacebookContent(content)
+        this.createSocialContent(content),
+        this.createCEOContent(content)
       ]);
 
       const processingTime = Date.now() - startTime;
@@ -165,11 +191,11 @@ export class RepurposerAgent {
     let twitterContent = '';
     
     if (focusAreas.includes('heat') || focusAreas.includes('recycling')) {
-      twitterContent = `Waste heat monetization is reshaping Bitcoin mining! Converting thermal energy into community heating solutions creates competitive advantages while reducing environmental impact. The future of mining lies in heat recovery. #BitcoinMining #HeatRecovery`;
+      twitterContent = `Waste heat monetization is reshaping Bitcoin mining. Converting thermal energy into useful applications creates competitive advantages while reducing environmental impact. The future of mining increasingly involves heat recovery. #BitcoinMining #HeatRecovery`;
     } else if (focusAreas.includes('renewable') || focusAreas.includes('sustainability')) {
-      twitterContent = `Bitcoin mining's renewable energy transition accelerates as operators discover stranded energy opportunities. From hydroelectric dams to solar farms, miners are transforming energy infrastructure. #SustainableMining #RenewableEnergy`;
+      twitterContent = `Bitcoin mining's renewable energy transition continues as operators align with grid realities and stranded energy opportunities. #SustainableMining #RenewableEnergy`;
     } else if (focusAreas.includes('data') || focusAreas.includes('costs')) {
-      twitterContent = `Data center optimization emerges as the new frontier in Bitcoin mining efficiency. Smart operators are discovering that infrastructure intelligence trumps raw computing power. #DataCenterOptimization #MiningEfficiency`;
+      twitterContent = `Data center optimization is emerging as the new frontier in mining efficiency. Infrastructure intelligence now matters as much as raw compute. #DataCenterOptimization #MiningEfficiency`;
     } else {
       twitterContent = `Bitcoin mining evolves beyond simple hash generation. Today's operators are building integrated energy systems that serve communities while securing the network. #BitcoinMining #Innovation`;
     }
@@ -221,11 +247,7 @@ export class RepurposerAgent {
     let linkedinContent = '';
     
     if (focusAreas.includes('heat') || focusAreas.includes('recycling')) {
-      linkedinContent = `With ASIC efficiency gains plateauing, Bitcoin miners are discovering that profitability lies in better heat utilization. At Bitzero, we've positioned ourselves at the forefront of this transformation with our heat recycling program and are also committed to environmental sustainability practices in every aspect of our operation.
-
-Our green data centers across Norway, Finland, and North Dakota are designed not just for sustainable mining but as contributors to other applications that benefit local communities. Operations that embrace thermal recovery today will have the competitive edge needed when the next market cycle tests the industry.
-
-Explore our sustainable mining approach.`;
+      linkedinContent = `With ASIC efficiency gains plateauing, miners are discovering that profitability increasingly depends on better heat utilization. Heat recycling and integration with nearby district heating can create new revenue streams while improving environmental performance.`;
     } else if (focusAreas.includes('renewable') || focusAreas.includes('sustainability')) {
       linkedinContent = `Bitcoin mining's renewable energy transition represents more than environmental responsibility—it's becoming a competitive advantage. Leading operators are discovering that stranded energy assets offer unique opportunities for both profitability and community impact.
 
@@ -257,131 +279,59 @@ Operations that embrace this integrated approach will have the competitive edge 
     };
   }
 
-  private async createInstagramContent(content: LongFormContent): Promise<PlatformContent> {
+  // Merged Instagram/Facebook -> Social
+  private async createSocialContent(content: LongFormContent): Promise<PlatformContent> {
     try {
       // Try to use real LLM first
       if (this.llm) {
-        const prompt = this.buildInstagramPrompt(content);
+        const prompt = this.buildSocialPrompt(content);
         const response = await this.llm.invoke(prompt);
-        const instagramContent = typeof response === 'string' ? response : (response && typeof response === 'object' && 'content' in response ? String((response as { content?: unknown }).content ?? '') : String(response ?? ''));
+        const socialContent = typeof response === 'string' ? response : (response && typeof response === 'object' && 'content' in response ? String((response as { content?: unknown }).content ?? '') : String(response ?? ''));
         
         return {
-          platform: 'instagram',
-          content: instagramContent.trim(),
-          hashtags: this.extractHashtags(instagramContent),
-          characterCount: instagramContent.length,
+          platform: 'social',
+          content: socialContent.trim(),
+          hashtags: this.extractHashtags(socialContent),
+          characterCount: socialContent.length,
           metadata: {
-            hook: this.extractHook(instagramContent),
-            cta: this.extractCTA(instagramContent)
+            hook: this.extractHook(socialContent),
+            cta: this.extractCTA(socialContent)
           }
         };
       } else {
         // Fallback to mock content
-        console.log('⚠️ No LLM provider configured, using mock Instagram content');
-        return this.createMockInstagramContent(content);
+        console.log('⚠️ No LLM provider configured, using mock Social content');
+        return this.createMockSocialContent(content);
       }
     } catch (error) {
-      console.error('❌ Error generating Instagram content with LLM:', error);
-      console.log('🔄 Falling back to mock Instagram content');
-      return this.createMockInstagramContent(content);
+      console.error('❌ Error generating Social content with LLM:', error);
+      console.log('🔄 Falling back to mock Social content');
+      return this.createMockSocialContent(content);
     }
   }
 
-  private createMockInstagramContent(content: LongFormContent): PlatformContent {
+  private createMockSocialContent(content: LongFormContent): PlatformContent {
     const focusAreas = content.metadata.focusAreas.join(', ');
     
-    let instagramContent = '';
+    let socialContent = '';
     
     if (focusAreas.includes('heat') || focusAreas.includes('recycling')) {
-      instagramContent = `Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. At Bitzero, our operational heat recycling program converts thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes.
-
-A competitive advantage for miners, plus a positive environmental impact!`;
+      socialContent = `Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. Operational heat recycling can convert thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes.`;
     } else if (focusAreas.includes('renewable') || focusAreas.includes('sustainability')) {
-      instagramContent = `Bitcoin mining's renewable energy transition represents more than environmental responsibility—it's becoming a competitive advantage. Leading operators are discovering that stranded energy assets offer unique opportunities for both profitability and community impact.
-
-The integration of renewable energy sources with mining operations creates symbiotic relationships with local communities. From hydroelectric partnerships to solar farm collaborations, miners are transforming energy infrastructure while securing the Bitcoin network.`;
+      socialContent = `The renewable energy transition in Bitcoin mining represents more than environmental responsibility—it's becoming a competitive advantage. Operators are discovering that stranded energy assets offer opportunities for both profitability and community impact.`;
     } else if (focusAreas.includes('data') || focusAreas.includes('costs')) {
-      instagramContent = `Data center optimization emerges as the new frontier in Bitcoin mining efficiency. While ASIC performance improvements have plateaued, smart operators are discovering that infrastructure intelligence can deliver significant competitive advantages.
-
-The shift from pure computing power to holistic efficiency represents a fundamental change in mining strategy. Operators with strong data center expertise are outperforming traditional players by optimizing everything from cooling systems to power distribution.`;
-    } else {
-      instagramContent = `Bitcoin mining evolves beyond simple hash generation. Today's operators are building integrated energy systems that serve communities while securing the network. This transformation requires a new approach to infrastructure, sustainability, and community engagement.
-
-The future of Bitcoin mining lies in creating value beyond block rewards. From heat recovery programs to renewable energy partnerships, miners are discovering that their operations can benefit local communities while maintaining profitability.`;
-    }
-
-    return {
-      platform: 'instagram',
-      content: instagramContent.trim(),
-      hashtags: this.extractHashtags(instagramContent),
-      characterCount: instagramContent.length,
-      metadata: {
-        hook: instagramContent.split('.')[0] + '.',
-        cta: ''
-      }
-    };
-  }
-
-  private async createFacebookContent(content: LongFormContent): Promise<PlatformContent> {
-    try {
-      // Try to use real LLM first
-      if (this.llm) {
-        const prompt = this.buildFacebookPrompt(content);
-        const response = await this.llm.invoke(prompt);
-        const facebookContent = typeof response === 'string' ? response : (response && typeof response === 'object' && 'content' in response ? String((response as { content?: unknown }).content ?? '') : String(response ?? ''));
-        
-        return {
-          platform: 'facebook',
-          content: facebookContent.trim(),
-          characterCount: facebookContent.length,
-          metadata: {
-            hook: this.extractHook(facebookContent),
-            cta: this.extractCTA(facebookContent),
-            engagement: this.extractEngagementPrompt(facebookContent)
-          }
-        };
+      socialContent = `Data center optimization is emerging as the new frontier in Bitcoin mining efficiency. While ASIC performance improvements have plateaued, infrastructure intelligence continues to deliver competitive advantages.`;
       } else {
-        // Fallback to mock content
-        console.log('⚠️ No LLM provider configured, using mock Facebook content');
-        return this.createMockFacebookContent(content);
-      }
-    } catch (error) {
-      console.error('❌ Error generating Facebook content with LLM:', error);
-      console.log('🔄 Falling back to mock Facebook content');
-      return this.createMockFacebookContent(content);
-    }
-  }
-
-  private createMockFacebookContent(content: LongFormContent): PlatformContent {
-    const focusAreas = content.metadata.focusAreas.join(', ');
-    
-    let facebookContent = '';
-    
-    if (focusAreas.includes('heat') || focusAreas.includes('recycling')) {
-      facebookContent = `Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. At Bitzero, our operational heat recycling program converts thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes.
-
-A competitive advantage for miners, plus a positive environmental impact!`;
-    } else if (focusAreas.includes('renewable') || focusAreas.includes('sustainability')) {
-      facebookContent = `Bitcoin mining's renewable energy transition represents more than environmental responsibility—it's becoming a competitive advantage. Leading operators are discovering that stranded energy assets offer unique opportunities for both profitability and community impact.
-
-The integration of renewable energy sources with mining operations creates symbiotic relationships with local communities. From hydroelectric partnerships to solar farm collaborations, miners are transforming energy infrastructure while securing the Bitcoin network.`;
-    } else if (focusAreas.includes('data') || focusAreas.includes('costs')) {
-      facebookContent = `Data center optimization emerges as the new frontier in Bitcoin mining efficiency. While ASIC performance improvements have plateaued, smart operators are discovering that infrastructure intelligence can deliver significant competitive advantages.
-
-The shift from pure computing power to holistic efficiency represents a fundamental change in mining strategy. Operators with strong data center expertise are outperforming traditional players by optimizing everything from cooling systems to power distribution.`;
-    } else {
-      facebookContent = `Bitcoin mining evolves beyond simple hash generation. Today's operators are building integrated energy systems that serve communities while securing the network. This transformation requires a new approach to infrastructure, sustainability, and community engagement.
-
-The future of Bitcoin mining lies in creating value beyond block rewards. From heat recovery programs to renewable energy partnerships, miners are discovering that their operations can benefit local communities while maintaining profitability.`;
+      socialContent = `Bitcoin mining is evolving beyond simple hash generation. Operators are building integrated energy systems that serve communities while securing the network, emphasizing infrastructure, sustainability, and operational efficiency.`;
     }
 
     return {
-      platform: 'facebook',
-      content: facebookContent.trim(),
-      hashtags: this.extractHashtags(facebookContent),
-      characterCount: facebookContent.length,
+      platform: 'social',
+      content: socialContent.trim(),
+      hashtags: this.extractHashtags(socialContent),
+      characterCount: socialContent.length,
       metadata: {
-        hook: facebookContent.split('.')[0] + '.',
+        hook: socialContent.split('.')[0] + '.',
         cta: ''
       }
     };
@@ -392,20 +342,31 @@ The future of Bitcoin mining lies in creating value beyond block rewards. From h
     
     return `Create a professional Twitter post (max 280 characters) for Bitcoin mining industry professionals.
 
+STRICT FACTUALITY:
+- Do not invent company names, projects, programs, or datasets.
+- If mentioning organizations, use only those present in the provided sources or content body.
+- No emojis, no questions, no direct CTAs.
+
+HUMAN STYLE (avoid robotic tone):
+- Use natural cadence: mix short punchy sentences with longer lines.
+- Prefer concrete verbs and nouns over buzzwords; avoid boilerplate phrases.
+- No template openings like "In conclusion", "Overall", "As we know".
+- Keep it crisp and narrative-first; one core idea, one strong line.
+
 ORIGINAL CONTENT:
 Title: ${content.title}
 Focus Areas: ${content.metadata.focusAreas.join(', ')}
 
-COMPREHENSIVE DATA CONTEXT:
-- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice?.toLocaleString()}
-- Hash Rate: ${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : 'N/A'}
-- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%
-- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}
-- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}
+FILTERED DATA CONTEXT (use only if present and non-zero):
+${Number.isFinite(comprehensiveData.onChain.bitcoinPrice) && comprehensiveData.onChain.bitcoinPrice > 0 ? `- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice.toLocaleString()}` : ''}
+${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `- Hash Rate: ${ (comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : ''}
+${Number.isFinite(comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage) && comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage > 0 ? `- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%` : ''}
+${Number.isFinite(comprehensiveData.sustainability.dataCenterMetrics.pue) && comprehensiveData.sustainability.dataCenterMetrics.pue > 0 ? `- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}` : ''}
+${Number.isFinite(comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice) && comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice > 0 ? `- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}` : ''}
 
 STYLE REQUIREMENTS:
 - Write like a senior industry analyst, not a marketing bot
-- Use specific numbers and industry terminology naturally
+- Use numbers sparingly and only when clearly supported by source context
 - Professional, data-driven, engaging tone
 - Include relevant hashtags (2-3 maximum)
 - NO QUESTIONS OR CALL-TO-ACTION
@@ -416,7 +377,7 @@ STYLE REQUIREMENTS:
 
 EXAMPLE STYLE: "Waste heat monetization is reshaping Bitcoin mining, selling 3.5MW from heat recycling is enough energy to heat 5,000 homes! By 2027, capturing just 30% of waste heat could create a 2¢/kWh advantage, a significant figure for BTC miners."
 
-IMPORTANT: Focus on the specific focus area (${content.metadata.focusAreas.join(', ')}) rather than generic Bitcoin metrics. Tell a compelling story about that specific aspect. Use numbers only when they support the narrative.
+IMPORTANT: Focus on the specific focus area (${content.metadata.focusAreas.join(', ')}) rather than generic Bitcoin metrics. Use cautious phrasing if data is not explicitly sourced in the long-form body.
 
 TWITTER POST (max 280 chars):`;
   }
@@ -430,18 +391,24 @@ ORIGINAL CONTENT:
 Title: ${content.title}
 Focus Areas: ${content.metadata.focusAreas.join(', ')}
 
-COMPREHENSIVE DATA CONTEXT:
-- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice?.toLocaleString()}
-- Hash Rate: ${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : 'N/A'}
-- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%
-- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}
-- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}
+FILTERED DATA CONTEXT (use only if present and non-zero):
+${Number.isFinite(comprehensiveData.onChain.bitcoinPrice) && comprehensiveData.onChain.bitcoinPrice > 0 ? `- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice.toLocaleString()}` : ''}
+${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `- Hash Rate: ${ (comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : ''}
+${Number.isFinite(comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage) && comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage > 0 ? `- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%` : ''}
+${Number.isFinite(comprehensiveData.sustainability.dataCenterMetrics.pue) && comprehensiveData.sustainability.dataCenterMetrics.pue > 0 ? `- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}` : ''}
+${Number.isFinite(comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice) && comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice > 0 ? `- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}` : ''}
+
+HUMAN STYLE (avoid robotic tone):
+- Natural cadence; vary sentence length and rhythm.
+- Lead with a concrete observation; avoid generic setup sentences.
+- Use specific, experiential language; avoid buzzwords and cliches.
+- Prefer paragraphs to long bullet lists (max one short list if needed).
 
 STYLE REQUIREMENTS:
 - Write like a senior industry analyst, not a marketing bot
 - Professional, analytical tone with specific data points
 - Use industry terminology naturally
-- Include specific company examples and case studies where relevant
+- Avoid naming specific companies unless present in the long-form body or validated sources
 - Focus on business implications and strategic insights
 - NO QUESTIONS OR CALL-TO-ACTION
 - NO EMOJIS OR ICONS
@@ -450,32 +417,39 @@ STYLE REQUIREMENTS:
 
 EXAMPLE STYLE: "With ASIC efficiency gains plateauing, Bitcoin miners are discovering that profitability lies in better heat utilization. At Bitzero, we've positioned ourselves at the forefront of this transformation with our heat recycling program and are also committed to environmental sustainability practices in every aspect of our operation."
 
-IMPORTANT: Focus on the specific focus area (${content.metadata.focusAreas.join(', ')}) rather than generic Bitcoin metrics. Tell a compelling story about that specific aspect. Use numbers only when they support the narrative.
+STRICT FACTUALITY:
+- Do not invent company names, programs, or metrics.
+- If a claim requires attribution, phrase cautiously ("operators report", "industry data indicates") unless a specific source from the long-form body is clearly provided.
 
 LINKEDIN POST:`;
   }
 
-  private buildInstagramPrompt(content: LongFormContent): string {
+  private buildSocialPrompt(content: LongFormContent): string {
     const { comprehensiveData } = content;
     
-    return `Create a professional Instagram/Facebook post (2-3 paragraphs) for Bitcoin mining industry professionals.
+    return `Create a combined Instagram/Facebook post (single text works on both). Professional, narrative-first. No emojis. No questions. No CTAs.
 
 ORIGINAL CONTENT:
 Title: ${content.title}
 Focus Areas: ${content.metadata.focusAreas.join(', ')}
 
-COMPREHENSIVE DATA CONTEXT:
-- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice?.toLocaleString()}
-- Hash Rate: ${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : 'N/A'}
-- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%
-- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}
-- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}
+FILTERED DATA CONTEXT (use only if present and non-zero):
+${Number.isFinite(comprehensiveData.onChain.bitcoinPrice) && comprehensiveData.onChain.bitcoinPrice > 0 ? `- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice.toLocaleString()}` : ''}
+${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `- Hash Rate: ${ (comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : ''}
+${Number.isFinite(comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage) && comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage > 0 ? `- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%` : ''}
+${Number.isFinite(comprehensiveData.sustainability.dataCenterMetrics.pue) && comprehensiveData.sustainability.dataCenterMetrics.pue > 0 ? `- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}` : ''}
+${Number.isFinite(comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice) && comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice > 0 ? `- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}` : ''}
+
+HUMAN STYLE (avoid robotic tone):
+- Warm, human cadence; two short paragraphs are fine.
+- Prefer examples and operational vignettes to buzzwords.
+- Avoid marketing-y transitions and cliches.
 
 STYLE REQUIREMENTS:
 - Write like a senior industry analyst, not a marketing bot
 - Professional, engaging tone with specific data points
 - Use industry terminology naturally
-- Include specific company examples and case studies where relevant
+- Avoid naming specific companies unless present in the long-form body or validated sources
 - Focus on practical applications and real-world impact
 - NO QUESTIONS OR CALL-TO-ACTION
 - NO EMOJIS OR ICONS
@@ -484,43 +458,37 @@ STYLE REQUIREMENTS:
 
 EXAMPLE STYLE: "Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. At Bitzero, our operational heat recycling program converts thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes."
 
-IMPORTANT: Focus on the specific focus area (${content.metadata.focusAreas.join(', ')}) rather than generic Bitcoin metrics. Tell a compelling story about that specific aspect. Use numbers only when they support the narrative.
+STRICT FACTUALITY:
+- Do not invent company names or specific metrics.
+- Use cautious language where precision is uncertain.
 
-INSTAGRAM/FACEBOOK POST:`;
+SOCIAL POST:`;
   }
 
-  private buildFacebookPrompt(content: LongFormContent): string {
+  private buildCEOPrompt(content: LongFormContent): string {
     const { comprehensiveData } = content;
+    return `Write a first-person CEO perspective post. Speaker is a data center company CEO. Professional, reflective, operationally grounded. No emojis, no questions, no CTAs.
     
-    return `Create a professional Facebook post (2-3 paragraphs) for Bitcoin mining industry professionals.
+STRICT FACTUALITY:
+- Do not invent company names or proprietary programs.
+- Do not claim specific locations or assets unless present in the original body.
+- Use "we" only to refer to general operator practices, not a specific company unless provided.
 
-ORIGINAL CONTENT:
+ORIGINAL CONTENT SUMMARY:
 Title: ${content.title}
-Focus Areas: ${content.metadata.focusAreas.join(', ')}
+Key Focus: ${content.metadata.focusAreas.join(', ')}
 
-COMPREHENSIVE DATA CONTEXT:
-- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice?.toLocaleString()}
-- Hash Rate: ${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(2)} EH/s` : 'N/A'}
-- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage}%
-- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}
-- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}
+DATA CONTEXT (optional to reference cautiously):
+- Hashrate: ${Number.isFinite(comprehensiveData.onChain.hashrate) && comprehensiveData.onChain.hashrate > 0 ? `${(comprehensiveData.onChain.hashrate / 1e18).toFixed(0)} EH/s` : 'N/A'}
+- Renewable share: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage || 'N/A'}%
+- PUE context: ${comprehensiveData.sustainability.dataCenterMetrics.pue || 'N/A'}
 
-STYLE REQUIREMENTS:
-- Write like a senior industry analyst, not a marketing bot
-- Professional, engaging tone with specific data points
-- Use industry terminology naturally
-- Include specific company examples and case studies where relevant
-- Focus on practical applications and real-world impact
-- NO QUESTIONS OR CALL-TO-ACTION
-- NO EMOJIS OR ICONS
-- Tell a STORY, not just list numbers
-- Be conversational and natural
-
-EXAMPLE STYLE: "Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. At Bitzero, our operational heat recycling program converts thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes."
-
-IMPORTANT: Focus on the specific focus area (${content.metadata.focusAreas.join(', ')}) rather than generic Bitcoin metrics. Tell a compelling story about that specific aspect. Use numbers only when they support the narrative.
-
-FACEBOOK POST:`;
+STYLE:
+- Begin with a clear stance or observation from years in the industry
+- Explain what is shifting operationally and why
+- Share 2-4 practical practices (e.g., heat reuse contracts, demand response, airflow optimization) as generalized strategies
+- Avoid brand names; keep it universally applicable
+`;
   }
 
   private extractHashtags(content: string): string[] {

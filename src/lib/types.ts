@@ -163,7 +163,7 @@ export interface LongFormContent {
 }
 
 export interface PlatformContent {
-  platform: 'twitter' | 'linkedin' | 'instagram' | 'facebook';
+  platform: 'twitter' | 'linkedin' | 'social' | 'ceo';
   content: string;
   mediaUrls?: string[];
   hashtags?: string[];

@@ -430,24 +430,24 @@ export class ComprehensiveDataCollector {
       } catch {}
 
       try {
-        const resultsArrays = await Promise.all(
-          queries.map(q => this.exa.searchWeb(q, { numResults: 6, startPublishedDate: since, includeHighlights: true, includeDomains }))
-        );
+      const resultsArrays = await Promise.all(
+        queries.map(q => this.exa.searchWeb(q, { numResults: 6, startPublishedDate: since, includeHighlights: true, includeDomains }))
+      );
 
-        const pick = (list: Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>): EvidenceSource | undefined => {
-          const r = Array.isArray(list) && list[0] ? list[0] : undefined;
-          if (!r) return undefined;
-          return { title: r.title || 'Web source', url: r.url, site: r.siteName, publishedDate: r.publishedDate };
-        };
+      const pick = (list: Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>): EvidenceSource | undefined => {
+        const r = Array.isArray(list) && list[0] ? list[0] : undefined;
+        if (!r) return undefined;
+        return { title: r.title || 'Web source', url: r.url, site: r.siteName, publishedDate: r.publishedDate };
+      };
 
-        const prov: SustainabilityProvenance = {
-          renewable: pick(resultsArrays[0] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
-          pue: pick(resultsArrays[1] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
-          carbon: pick(resultsArrays[2] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
-          breakEven: pick(resultsArrays[3] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
-          collectedAt: new Date().toISOString()
-        };
-        return prov;
+      const prov: SustainabilityProvenance = {
+        renewable: pick(resultsArrays[0] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
+        pue: pick(resultsArrays[1] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
+        carbon: pick(resultsArrays[2] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
+        breakEven: pick(resultsArrays[3] as Array<{ title: string; url: string; siteName?: string; publishedDate?: string }>),
+        collectedAt: new Date().toISOString()
+      };
+      return prov;
       } catch (exaError) {
         console.warn('Exa failed, using Claude to generate authoritative sources:', exaError);
         // Use Claude to generate authoritative sources when Exa fails
@@ -947,11 +947,11 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Always try to get real data from Cambridge Bitcoin Electricity Consumption Index
-      const response = await axios.get(
-        'https://ccaf.io/cbeci/api/country',
-        { timeout: 10000 }
-      );
-    
+        const response = await axios.get(
+          'https://ccaf.io/cbeci/api/country',
+          { timeout: 10000 }
+        );
+      
       if (response.data) {
         // Extract data from Cambridge CBEI
         const totalConsumption = response.data.total_consumption || 150; // TWh
@@ -962,7 +962,7 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
           renewableEnergyPercentage: renewablePercentage,
           cleanEnergyMining: renewablePercentage
         };
-      }
+    }
     } catch {
       console.warn('Carbon footprint live fetch unavailable, using fallback');
     }
@@ -985,11 +985,11 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Always get data from Cambridge Bitcoin Electricity Consumption Index
-      const response = await axios.get(
-        'https://ccaf.io/cbeci/api/country',
-        { timeout: 10000 }
-      );
-    
+        const response = await axios.get(
+          'https://ccaf.io/cbeci/api/country',
+          { timeout: 10000 }
+        );
+      
       if (response.data) {
         const totalConsumption = response.data.total_consumption || 150;
         const renewablePercentage = response.data.renewable_percentage || 60;
@@ -1002,7 +1002,7 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
             demandResponse: 25 // Percentage participating in demand response
           }
         };
-      }
+    }
     } catch {
       console.warn('Energy consumption live fetch unavailable, using fallback');
     }
@@ -1025,18 +1025,18 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
+        return {
         pue: 0,
         carbonIntensity: 0,
         renewableEnergyRatio: 0
       };
     } catch {
       console.warn('Data center metrics live fetch unavailable, using empty data');
-      return {
-        pue: 0,
-        carbonIntensity: 0,
-        renewableEnergyRatio: 0
-      };
+    return {
+      pue: 0,
+      carbonIntensity: 0,
+      renewableEnergyRatio: 0
+    };
     }
   }
 
@@ -1054,13 +1054,13 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
-        electricityCosts: {
+        return {
+          electricityCosts: {
           globalAverage: 0,
           renewableEnergyCost: 0,
           traditionalEnergyCost: 0
-        },
-        profitabilityMetrics: {
+          },
+          profitabilityMetrics: {
           breakEvenPrice: 0,
           profitMargin: 0,
           roi: 0
@@ -1068,18 +1068,18 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
       };
     } catch {
       console.warn('Mining economics live fetch unavailable, using empty data');
-      return {
-        electricityCosts: {
-          globalAverage: 0,
-          renewableEnergyCost: 0,
-          traditionalEnergyCost: 0
-        },
-        profitabilityMetrics: {
-          breakEvenPrice: 0,
-          profitMargin: 0,
-          roi: 0
-        }
-      };
+    return {
+      electricityCosts: {
+        globalAverage: 0,
+        renewableEnergyCost: 0,
+        traditionalEnergyCost: 0
+      },
+      profitabilityMetrics: {
+        breakEvenPrice: 0,
+        profitMargin: 0,
+        roi: 0
+      }
+    };
     }
   }
 
@@ -1109,24 +1109,24 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
-        twitter: {
+        return {
+          twitter: {
           hashtags: [],
           sentiment: 'neutral',
           engagement: 0,
           reach: 0
-        },
-        reddit: {
+          },
+          reddit: {
           subreddits: [],
           sentiment: 'neutral',
           upvotes: 0
-        },
-        linkedin: {
+          },
+          linkedin: {
           posts: 0,
           sentiment: 'neutral',
           engagement: 0
-        },
-        youtube: {
+          },
+          youtube: {
           videos: 0,
           views: 0,
           sentiment: 'neutral'
@@ -1134,12 +1134,12 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
       };
     } catch {
       console.warn('Social media trends live fetch unavailable, using empty data');
-      return {
-        twitter: { hashtags: [], sentiment: 'neutral', engagement: 0, reach: 0 },
-        reddit: { subreddits: [], sentiment: 'neutral', upvotes: 0 },
-        linkedin: { posts: 0, sentiment: 'neutral', engagement: 0 },
-        youtube: { videos: 0, views: 0, sentiment: 'neutral' }
-      };
+    return {
+      twitter: { hashtags: [], sentiment: 'neutral', engagement: 0, reach: 0 },
+      reddit: { subreddits: [], sentiment: 'neutral', upvotes: 0 },
+      linkedin: { posts: 0, sentiment: 'neutral', engagement: 0 },
+      youtube: { videos: 0, views: 0, sentiment: 'neutral' }
+    };
     }
   }
 
@@ -1156,23 +1156,23 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
-        google: {
+        return {
+          google: {
           keywords: [],
           searchVolume: [],
           relatedQueries: []
-        },
-        youtube: {
+          },
+          youtube: {
           trendingVideos: [],
           viewCounts: []
-        }
-      };
+          }
+        };
     } catch {
       console.warn('Search trends live fetch unavailable, using empty data');
-      return {
-        google: { keywords: [], searchVolume: [], relatedQueries: [] },
-        youtube: { trendingVideos: [], viewCounts: [] }
-      };
+    return {
+      google: { keywords: [], searchVolume: [], relatedQueries: [] },
+      youtube: { trendingVideos: [], viewCounts: [] }
+    };
     }
   }
 
@@ -1183,7 +1183,7 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
+        return {
         headlines: [],
         sentiment: 'neutral',
         sources: []
@@ -1205,14 +1205,14 @@ ${pages.map(p => `URL: ${p.url}\nCONTENT: ${p.text}`).join('\n\n---\n\n')}`;
   }> {
     try {
       // Return empty data to force Claude to search
-      return {
+        return {
         corporateTreasury: 0,
         etfFlows: 0,
         regulatoryUpdates: []
       };
     } catch {
       console.warn('Institutional adoption live fetch unavailable, using empty data');
-      return { 
+    return {
         corporateTreasury: 0, 
         etfFlows: 0, 
         regulatoryUpdates: [] 

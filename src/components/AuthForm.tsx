@@ -2,20 +2,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { signInWithEmail, signUpWithEmail, signInWithGoogle, resendConfirmationEmail } from '@/lib/supabase';
+import { signInWithEmail, resetPassword } from '@/lib/supabase';
 
 interface Props {
   onSuccess?: () => void;
 }
 
 export default function AuthForm({ onSuccess }: Props) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
+  const [email] = useState('Schofield.eth@gmail.com'); // Fixed email, cannot be changed
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [confirmPassword, setConfirmPassword] = useState('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Ensure Dancing Script font is available for the brand title
   useEffect(() => {
@@ -213,24 +211,14 @@ export default function AuthForm({ onSuccess }: Props) {
     return () => { if (titleTimer) window.clearInterval(titleTimer); if (title2Timer) window.clearInterval(title2Timer); if (bodyTimer) window.clearInterval(bodyTimer); if (body2Timer) window.clearInterval(body2Timer); };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent, which: 'signin' | 'signup' = mode) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setInfo(null);
     try {
-      if (which === 'signin') {
-        const { error } = await signInWithEmail(email, password);
-        if (error) throw error;
-      } else {
-        if (password !== confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-        const { error } = await signUpWithEmail(email, password, window.location.origin);
-        if (error) throw error;
-        setInfo('Check your email to confirm your account.');
-        return; // wait for confirmation instead of immediate onSuccess
-      }
+      const { error } = await signInWithEmail(email, password);
+      if (error) throw error;
       onSuccess?.();
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'message' in err) {
@@ -238,6 +226,26 @@ export default function AuthForm({ onSuccess }: Props) {
         setError(msg);
       } else {
         setError('Authentication failed');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setLoading(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const { error } = await resetPassword(email);
+      if (error) throw error;
+      setInfo('Password reset email sent to Schofield.eth@gmail.com');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'message' in err) {
+        const msg = (err as { message?: string }).message || 'Failed to send reset email';
+        setError(msg);
+      } else {
+        setError('Failed to send reset email');
       }
     } finally {
       setLoading(false);
@@ -297,92 +305,56 @@ export default function AuthForm({ onSuccess }: Props) {
             <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">{error}</div>
           )}
           {info && (
-            <div className="mb-3 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded p-2 flex items-center justify-between">
+            <div className="mb-3 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded p-2">
               <span>{info}</span>
-              <button
-                className="text-blue-700 hover:underline"
-                onClick={async () => { await resendConfirmationEmail(email); setInfo('Confirmation email resent.'); }}
-              >Resend</button>
             </div>
           )}
 
-          {/* Sliding forms container */}
-          <div className="relative overflow-hidden">
-            <div className={`flex w-[200%] transition-transform duration-500 ease-in-out ${mode === 'signin' ? 'translate-x-0' : '-translate-x-1/2'}`}>
-              {/* Sign In panel (form + google + links) */}
-              <div className="w-1/2 pr-2">
-                <form onSubmit={(e) => handleSubmit(e, 'signin')} className="space-y-3">
-                  <div>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400"
-                      placeholder="Email"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400"
-                      placeholder="Password"
-                      minLength={6}
-                    />
-                  </div>
-                  <button type="submit" disabled={loading} className="w-full py-2.5 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-black disabled:opacity-60 transition">{loading ? 'Please wait…' : 'Sign In'}</button>
-                </form>
-                <div className="my-4 flex items-center gap-2 text-[11px] text-gray-500"><div className="flex-1 h-px bg-gray-200"></div><span>or</span><div className="flex-1 h-px bg-gray-200"></div></div>
-                <button onClick={async () => { await signInWithGoogle(window.location.origin); }} className="w-full py-2.5 text-sm font-medium rounded-md border border-gray-300 text-gray-800 bg-white hover:bg-gray-50 inline-flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4" aria-hidden>
-                    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.826 31.91 29.28 35 24 35 16.82 35 11 29.18 11 22S16.82 9 24 9c3.311 0 6.313 1.249 8.594 3.289l5.657-5.657C34.759 3.042 29.654 1 24 1 10.745 1 0 11.745 0 25s10.745 24 24 24 24-10.745 24-24c0-1.627-.166-3.217-.389-4.917z"/>
-                    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.4 16.03 18.822 13 24 13c3.311 0 6.313 1.249 8.594 3.289l5.657-5.657C34.759 3.042 29.654 1 24 1 15.317 1 7.978 5.337 3.694 12.306l2.612 2.385z"/>
-                    <path fill="#4CAF50" d="M24 49c5.202 0 9.934-1.988 13.517-5.246l-6.239-5.268C29.137 40.902 26.715 42 24 42c-5.258 0-9.793-3.366-11.418-8.055l-6.5 5.017C9.311 44.885 16.203 49 24 49z"/>
-                    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.356 3.827-4.83 6.91-8.949 7.46l6.239 5.268C36.25 43.27 41 37.75 41 30c0-1.627-.166-3.217-.389-4.917z"/>
-                  </svg>
-                  Continue with Google
-                </button>
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  <span>Need an account? </span>
-                  <button onClick={() => setMode('signup')} className="text-blue-600 hover:underline transition">Sign Up</button>
-                </div>
+          {/* Single login form */}
+          <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  disabled
+                  className="w-full rounded-lg border border-gray-300/80 bg-gray-50 px-3.5 py-2.5 text-[14px] text-gray-500 cursor-not-allowed"
+                  placeholder="Schofield.eth@gmail.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">This email is fixed and cannot be changed</p>
               </div>
-              {/* Sign Up panel */}
-              <div className="w-1/2 pl-2">
-                <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-3">
-                  <div>
-                    <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400" placeholder="Email" />
-                  </div>
-                  <div>
-                    <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400" placeholder="Password" minLength={6} />
-                  </div>
-                  <div>
-                    <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400" placeholder="Confirm password" minLength={6} />
-                  </div>
-                  <button type="submit" disabled={loading} className="w-full py-2.5 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-black disabled:opacity-60 transition">{loading ? 'Please wait…' : 'Sign Up'}</button>
-                </form>
-                <div className="my-4 flex items-center gap-2 text-[11px] text-gray-500"><div className="flex-1 h-px bg-gray-200"></div><span>or</span><div className="flex-1 h-px bg-gray-200"></div></div>
-                <button onClick={async () => { await signInWithGoogle(window.location.origin); }} className="w-full py-2.5 text-sm font-medium rounded-md border border-gray-300 text-gray-800 bg-white hover:bg-gray-50 inline-flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-4 h-4" aria-hidden>
-                    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.826 31.91 29.28 35 24 35 16.82 35 11 29.18 11 22S16.82 9 24 9c3.311 0 6.313 1.249 8.594 3.289l5.657-5.657C34.759 3.042 29.654 1 24 1 10.745 1 0 11.745 0 25s10.745 24 24 24 24-10.745 24-24c0-1.627-.166-3.217-.389-4.917z"/>
-                    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.4 16.03 18.822 13 24 13c3.311 0 6.313 1.249 8.594 3.289l5.657-5.657C34.759 3.042 29.654 1 24 1 15.317 1 7.978 5.337 3.694 12.306l2.612 2.385z"/>
-                    <path fill="#4CAF50" d="M24 49c5.202 0 9.934-1.988 13.517-5.246l-6.239-5.268C29.137 40.902 26.715 42 24 42c-5.258 0-9.793-3.366-11.418-8.055l-6.5 5.017C9.311 44.885 16.203 49 24 49z"/>
-                    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.356 3.827-4.83 6.91-8.949 7.46l6.239 5.268C36.25 43.27 41 37.75 41 30c0-1.627-.166-3.217-.389-4.917z"/>
-                  </svg>
-                  Continue with Google
-                </button>
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  <span>Have an account? </span>
-                  <button onClick={() => setMode('signin')} className="text-blue-600 hover:underline transition">Sign In</button>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300/80 bg-white/90 px-3.5 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] transition focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 hover:border-gray-400"
+                  placeholder="Enter your password"
+                  minLength={6}
+                />
               </div>
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full py-2.5 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-black disabled:opacity-60 transition"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+            
+            <div className="text-center">
+              <button 
+                onClick={handleResetPassword}
+                disabled={loading}
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition disabled:opacity-50"
+              >
+                Forgot password?
+              </button>
             </div>
           </div>
-
-          {/* Google/button/links moved into sliding panels above */}
         </div>
       </div>
     </div>

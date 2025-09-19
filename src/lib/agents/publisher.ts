@@ -114,10 +114,10 @@ export class PublisherAgent {
         return this.publishToTwitter(platformContent);
       case 'linkedin':
         return this.publishToLinkedIn(platformContent);
-      case 'instagram':
-        return this.publishToInstagram(platformContent);
-      case 'facebook':
-        return this.publishToFacebook(platformContent);
+      case 'social':
+        return this.publishToSocial(platformContent);
+      case 'ceo':
+        return this.publishToCEOPost(platformContent);
       default:
         throw new Error(`Unsupported platform: ${platformContent.platform}`);
     }
@@ -144,22 +144,16 @@ export class PublisherAgent {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async publishToInstagram(_platformContent: PlatformContent): Promise<{ url: string; id: string }> {
-    // Instagram API integration would go here
-    // For now, return mock data
-    const id = `instagram_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const url = `https://instagram.com/p/${id}`;
-    
+  private async publishToSocial(_platformContent: PlatformContent): Promise<{ url: string; id: string }> {
+    // Combined Instagram/Facebook mock
+    const id = `social_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const url = `https://social.example.com/post/${id}`;
     return { url, id };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async publishToFacebook(_platformContent: PlatformContent): Promise<{ url: string; id: string }> {
-    // Facebook API integration would go here
-    // For now, return mock data
-    const id = `facebook_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const url = `https://facebook.com/mine.muse/posts/${id}`;
-    
+  private async publishToCEOPost(_platformContent: PlatformContent): Promise<{ url: string; id: string }> {
+    const id = `ceo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const url = `https://example.com/ceo/${id}`;
     return { url, id };
   }
 
@@ -172,10 +166,10 @@ export class PublisherAgent {
         return `https://twitter.com/mine_muse/status/${timestamp}_${randomId}`;
       case 'linkedin':
         return `https://linkedin.com/feed/update/${timestamp}_${randomId}`;
-      case 'instagram':
-        return `https://instagram.com/p/${timestamp}_${randomId}`;
-      case 'facebook':
-        return `https://facebook.com/mine.muse/posts/${timestamp}_${randomId}`;
+      case 'social':
+        return `https://social.example.com/post/${timestamp}_${randomId}`;
+      case 'ceo':
+        return `https://example.com/ceo/${timestamp}_${randomId}`;
       default:
         return `https://example.com/${platformContent.platform}/${timestamp}_${randomId}`;
     }

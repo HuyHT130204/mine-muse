@@ -30,16 +30,20 @@ export interface ArticleRow {
   user_id?: string | null;
 }
 
-// Auth helpers
-export async function signUpWithEmail(email: string, password: string, redirectTo?: string) {
-  const client = getClient();
-  if (!client) return { data: null, error: new Error('Supabase not configured') };
-  return client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
-}
+// Auth helpers - Sign up disabled for single account system
 
 export async function signInWithEmail(email: string, password: string) {
   const client = getClient();
   if (!client) return { data: null, error: new Error('Supabase not configured') };
+  
+  // Only allow specific email
+  if (email !== 'Schofield.eth@gmail.com') {
+    return { 
+      data: null, 
+      error: new Error('Access denied. Only authorized users can sign in.') 
+    };
+  }
+  
   return client.auth.signInWithPassword({ email, password });
 }
 
@@ -47,6 +51,23 @@ export async function signOut() {
   const client = getClient();
   if (!client) return { error: new Error('Supabase not configured') } as const;
   return client.auth.signOut();
+}
+
+export async function resetPassword(email: string) {
+  const client = getClient();
+  if (!client) return { data: null, error: new Error('Supabase not configured') };
+  
+  // Only allow reset for specific email
+  if (email !== 'Schofield.eth@gmail.com') {
+    return { 
+      data: null, 
+      error: new Error('Access denied. Only authorized users can reset password.') 
+    };
+  }
+  
+  return client.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth/reset-password`
+  });
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -63,20 +84,7 @@ export function onAuthStateChange(callback: (event: AuthChangeEvent, session: Se
   return client.auth.onAuthStateChange(callback) as unknown as AuthSubscription;
 }
 
-// OAuth: Google
-export async function signInWithGoogle(redirectTo?: string) {
-  const client = getClient();
-  if (!client) return { data: null, error: new Error('Supabase not configured') };
-  return client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-}
-
-// Resend email confirmation
-export async function resendConfirmationEmail(email: string) {
-  const client = getClient();
-  if (!client) return { data: null, error: new Error('Supabase not configured') };
-  // Uses the new v2 API: re-send signup email
-  return client.auth.resend({ type: 'signup', email });
-}
+// OAuth and signup functions removed for single account system
 
 export async function savePlatformPosts(posts: SavedPost[]): Promise<{ success: boolean; error?: string }>{
   if (!posts || posts.length === 0) return { success: true };

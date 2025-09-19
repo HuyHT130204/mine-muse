@@ -22,8 +22,8 @@ export class WriterAgent {
         longForm: {
           title: longFormContent.title,
           body: longFormContent.body,
-          comprehensiveData: topic.comprehensiveData,
-          metadata: {
+        comprehensiveData: topic.comprehensiveData,
+        metadata: {
             wordCount: longFormContent.body.split(/\s+/).length,
             readingTime: Math.ceil(longFormContent.body.split(/\s+/).length / 200),
             difficulty: this.calculateDifficulty(topic.difficulty),
@@ -37,7 +37,7 @@ export class WriterAgent {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
+
       return {
         success: true,
         data: {
@@ -109,7 +109,7 @@ export class WriterAgent {
 
   async generateLongFormContentStream(topic: ContentTopic, onChunk: (chunk: string) => void): Promise<LongFormContent> {
     try {
-      const prompt = this.buildPrompt(topic);
+      const prompt = await this.buildPrompt(topic);
       const response = await this.claude.generate(prompt, {
         maxTokens: 4000,
         temperature: 0.7
@@ -186,7 +186,7 @@ export class WriterAgent {
     body: string;
   }> {
     try {
-      const prompt = this.buildPrompt(topic);
+      const prompt = await this.buildPrompt(topic);
       const response = await this.claude.generate(prompt, {
         maxTokens: 4000,
         temperature: 0.7
@@ -211,27 +211,53 @@ export class WriterAgent {
     }
   }
 
-  private buildPrompt(topic: ContentTopic): string {
+  private async buildPrompt(topic: ContentTopic): Promise<string> {
     const { comprehensiveData } = topic;
+
+    // First, try to find real data using Claude
+    const realData = await this.findRealData(topic);
     
+    // Build filtered context (exclude 0/undefined values)
+    const ctxLines: string[] = [];
+    const price = comprehensiveData.onChain.bitcoinPrice;
+    if (typeof price === 'number' && price > 0) ctxLines.push(`- Bitcoin Price: $${price.toLocaleString()}`);
+    const diff = comprehensiveData.onChain.difficulty;
+    if (typeof diff === 'number' && diff > 0) ctxLines.push(`- Network Difficulty: ${(diff / 1e12).toFixed(1)}T`);
+    const hr = comprehensiveData.onChain.hashrate;
+    if (typeof hr === 'number' && hr > 0) ctxLines.push(`- Hash Rate: ${(hr / 1e18).toFixed(1)} EH/s`);
+    const ren = comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage;
+    if (typeof ren === 'number' && ren > 0) ctxLines.push(`- Renewable Energy: ${ren}%`);
+    const pue = comprehensiveData.sustainability.dataCenterMetrics.pue;
+    if (typeof pue === 'number' && pue > 0) ctxLines.push(`- PUE: ${pue}`);
+    const be = comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice;
+    if (typeof be === 'number' && be > 0) ctxLines.push(`- Break-even Price: $${be.toLocaleString()}`);
+
+    const filteredContext = ctxLines.length > 0 ? ctxLines.join('\n') : 'None (do not use zeros or placeholders).';
+
     return `You are a senior industry analyst and content writer specializing in Bitcoin mining, data centers, and sustainability. Write a comprehensive, professional article about: ${topic.title}
+
+STRICT FACTUALITY AND ANTI-HALLUCINATION:
+- Do NOT invent company names, organizations, programs, proprietary tools, or datasets.
+- Use ONLY metrics that are clearly supported by provided sources/provenance. If a metric is missing, DO NOT fabricate. Prefer qualitative analysis.
+- If you reference a metric, ensure it is not a default zero. Treat 0/N/A as missing and exclude it.
+- If necessary, phrase cautiously ("operators report", "industry data indicates") without inventing numbers.
 
 TOPIC DESCRIPTION: ${topic.description}
 FOCUS AREAS: ${topic.focusAreas.join(', ')}
 KEYWORDS: ${topic.keywords.join(', ')}
 
-CURRENT DATA CONTEXT:
-- Bitcoin Price: $${comprehensiveData.onChain.bitcoinPrice?.toLocaleString() || 'N/A'}
-- Network Difficulty: ${comprehensiveData.onChain.difficulty ? (comprehensiveData.onChain.difficulty / 1e12).toFixed(1) + 'T' : 'N/A'}
-- Hash Rate: ${comprehensiveData.onChain.hashrate ? (comprehensiveData.onChain.hashrate / 1e18).toFixed(1) + ' EH/s' : 'N/A'}
-- Renewable Energy: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage || 'N/A'}%
-- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue || 'N/A'}
-- Break-even Price: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice?.toLocaleString() || 'N/A'}
+AVAILABLE CONTEXT (filtered):
+${filteredContext}
+
+REAL DATA RESEARCH (if found):
+${realData}
+
+SOURCE PROVENANCE (if available): Use URLs/domains found in provenance to ground claims. If no provenance, avoid specific figures.
 
 WRITING REQUIREMENTS:
 - Write like a senior industry analyst, not a marketing bot
 - Focus on the STORY, not just numbers
-- Use numbers sparingly and only when relevant to the narrative
+- Use numbers sparingly and only when clearly supported by sources; otherwise prefer qualitative analysis
 - Make it engaging and narrative-driven
 - Professional tone with industry expertise
 - 1500-2500 words
@@ -247,6 +273,48 @@ STRUCTURE:
 5. Strong conclusion
 
 Write the article now:`;
+  }
+
+  private async findRealData(topic: ContentTopic): Promise<string> {
+    try {
+      const researchPrompt = `You are a research analyst. Find the most current, accurate data for Bitcoin mining industry metrics. Focus on these areas:
+
+TOPIC: ${topic.title}
+FOCUS AREAS: ${topic.focusAreas.join(', ')}
+
+Please research and provide current data for:
+1. Bitcoin network hash rate (in EH/s)
+2. Renewable energy percentage in Bitcoin mining
+3. Average PUE (Power Usage Effectiveness) for Bitcoin mining data centers
+4. Break-even price for Bitcoin mining (in USD)
+5. Network difficulty (in T)
+
+For each metric, provide:
+- The current value
+- The source/website where you found it
+- The date of the data
+
+If you cannot find reliable data for a metric, say "No reliable data found" for that metric.
+
+Format your response as:
+HASH RATE: [value] EH/s (Source: [website], Date: [date])
+RENEWABLE ENERGY: [value]% (Source: [website], Date: [date])
+PUE: [value] (Source: [website], Date: [date])
+BREAK-EVEN: $[value] (Source: [website], Date: [date])
+DIFFICULTY: [value]T (Source: [website], Date: [date])
+
+Research now:`;
+
+      const response = await this.claude.generate(researchPrompt, {
+        maxTokens: 1000,
+        temperature: 0.3
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Error finding real data:', error);
+      return 'No additional research data available.';
+    }
   }
 
   private async generatePlatformContent(): Promise<PlatformContent[]> {

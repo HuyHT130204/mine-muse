@@ -10,7 +10,6 @@ import React from 'react';
 import { savePlatformPosts, saveArticles, fetchRecentPosts, getCurrentUser, signOut, fetchArticlesByIds } from '@/lib/supabase';
 import AuthForm from '@/components/AuthForm';
 import GeneratingWireframe from '@/components/GeneratingWireframe';
-// ModelRotationStatus removed
 
 export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -56,10 +55,20 @@ export default function Dashboard() {
 
           // Save to Supabase
           const articleIdMap = new Map<string, string>();
+          const generateUUIDv4 = () => {
+            // RFC4122 v4-like UUID fallback when crypto.randomUUID is not available
+            const rnd = (len: number) => Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+            const part1 = rnd(8);
+            const part2 = rnd(4);
+            const part3 = '4' + rnd(3); // version 4
+            const part4 = ((8 + Math.floor(Math.random() * 4)).toString(16)) + rnd(3); // variant 10xx
+            const part5 = rnd(12);
+            return `${part1}-${part2}-${part3}-${part4}-${part5}`;
+          };
           const articles = (data.contentPackages as ContentPackage[]).map((pkg: ContentPackage) => {
             const newId = (globalThis.crypto && 'randomUUID' in globalThis.crypto)
               ? (globalThis.crypto as Crypto).randomUUID()
-              : Math.random().toString(36).slice(2) + '-' + Date.now();
+              : generateUUIDv4();
             articleIdMap.set(pkg.id, newId);
             const title = pkg.longForm?.title || 'Untitled';
             const body = pkg.longForm?.body || '';
@@ -68,10 +77,12 @@ export default function Dashboard() {
           });
           await saveArticles(articles);
 
+          // Save đúng tên kênh mới vào Supabase: 'social' và 'ceo'
+          const normalizeChannel = (ch: string) => ch;
           const postsToSave = (data.contentPackages as ContentPackage[]).flatMap((pkg: ContentPackage) =>
             pkg.platforms.map((p) => ({
               article_id: articleIdMap.get(pkg.id) || null,
-              channel: p.platform,
+              channel: normalizeChannel(p.platform),
               content: p.content,
               published: false,
             }))
@@ -146,7 +157,7 @@ export default function Dashboard() {
       const newest = byCreated[0];
       const platformMap = new Map<string, string>();
       for (const it of byCreated) platformMap.set(it.channel, it.content);
-      const platforms: PlatformContent[] = ['twitter', 'linkedin', 'instagram', 'facebook'].map((pf) => ({
+      const platforms: PlatformContent[] = ['twitter', 'linkedin', 'social', 'ceo'].map((pf) => ({
         platform: pf as PlatformContent['platform'],
         content: platformMap.get(pf) || '',
         mediaUrls: [],
@@ -375,10 +386,9 @@ export default function Dashboard() {
                   <button
                     onClick={handleGenerateContent}
                     disabled={isGenerating}
-                    className="mm-cta3d relative w-full py-2.5 text-sm font-medium rounded-md text-white shadow-md bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-60 overflow-hidden"
+                    className="relative w-full py-2.5 text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-black disabled:opacity-60"
                   >
-                    <span className="relative z-[1]">{isGenerating ? 'Generating…' : 'Generate Content'}</span>
-                    <span aria-hidden className="mm-cta-gloss"></span>
+                    <span className="relative z-[1] text-white">{isGenerating ? 'Generating…' : 'Generate Content'}</span>
                   </button>
                   <button
                     onClick={async () => { await signOut(); setAuthed(false); setContentPackages([]); }}
@@ -408,17 +418,6 @@ export default function Dashboard() {
 
           {/* Center: latest generated content with slides */}
           <main className="order-1 lg:order-2 lg:max-w-[940px] xl:max-w-[1000px] mx-auto animate-[mm-slide-up_var(--duration-base)_var(--ease-standard)]">
-            {isGenerating && (
-              <GeneratingWireframe
-                logs={genLogs}
-                onStop={async () => {
-                  try { await fetch('/api/generate/stop', { method: 'POST' }); } catch {}
-                  setIsGenerating(false);
-                  setToast('Generation stopped');
-                  setTimeout(()=> setToast(null), 3000);
-                }}
-              />
-            )}
             {contentPackages.length > 0 || savedPackages.length > 0 ? (
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
@@ -484,6 +483,15 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            ) : isGenerating ? (
+              <GeneratingWireframe 
+                logs={genLogs} 
+                onStop={() => {
+                  setIsGenerating(false);
+                  setGenLogs([]);
+                  fetch('/api/generate/stop', { method: 'POST' });
+                }} 
+              />
             ) : feedLoading ? (
               <div className="space-y-6">
                 {Array.from({ length: 3 }).map((_, idx) => (
