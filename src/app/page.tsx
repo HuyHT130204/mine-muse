@@ -10,6 +10,8 @@ import React from 'react';
 import { savePlatformPosts, saveArticles, fetchRecentPosts, getCurrentUser, signOut, fetchArticlesByIds } from '@/lib/supabase';
 import AuthForm from '@/components/AuthForm';
 import GeneratingWireframe from '@/components/GeneratingWireframe';
+import CreditWarning from '@/components/CreditWarning';
+import { useCreditStatus } from '@/hooks/useCreditStatus';
 
 export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -21,6 +23,17 @@ export default function Dashboard() {
   const [feedLoading, setFeedLoading] = useState<boolean>(true);
   const [savedPackages, setSavedPackages] = useState<ContentPackage[]>([]);
   const [authed, setAuthed] = useState<boolean>(false);
+  const [showCreditWarning, setShowCreditWarning] = useState<boolean>(false);
+  
+  // Check Claude credit status
+  const { hasCredits, isLoading: creditLoading } = useCreditStatus();
+  
+  // Show credit warning when credits are exhausted
+  React.useEffect(() => {
+    if (!creditLoading && !hasCredits) {
+      setShowCreditWarning(true);
+    }
+  }, [hasCredits, creditLoading]);
   
   // Auto-fetch data every 2 minutes to avoid rate limiting
   const { data: comprehensiveData, loading: dataLoading, error: dataError, lastUpdated } = useAutoFetchData({
@@ -359,6 +372,19 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Credit Status Indicator */}
+              {!creditLoading && !hasCredits && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-yellow-800">Mock Data Mode</span>
+                  </div>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Claude credits exhausted. Showing placeholder content.
+                  </p>
+                </div>
+              )}
+
               {comprehensiveData && (
                 <>
                 <div className="flex items-center justify-between mb-3">
@@ -577,6 +603,12 @@ export default function Dashboard() {
           {toast}
         </div>
       )}
+
+      {/* Credit Warning Modal */}
+      <CreditWarning 
+        isVisible={showCreditWarning} 
+        onClose={() => setShowCreditWarning(false)} 
+      />
     </div>
   );
 }
