@@ -76,10 +76,10 @@ export class RepurposerAgent {
         };
       }
       // Fallback mock
-      const fallback = `Từ góc nhìn điều hành: hiệu suất ASIC chậm lại đang buộc chúng tôi chuyển giá trị sang tận dụng nhiệt thải, tối ưu trung tâm dữ liệu và hợp đồng năng lượng linh hoạt. Đây không phải là câu chuyện marketing; đó là P&L và vận hành. Những đội nhóm gắn kết được kỹ thuật năng lượng và hạ tầng số sẽ có lợi thế chu kỳ tới.`;
+      const fallback = `ASIC efficiency gains are plateauing, forcing us to shift value creation toward waste heat utilization, data center optimization, and flexible energy contracts. This isn't marketing speak—it's P&L and operations. Teams that bridge energy engineering and digital infrastructure will have the advantage next cycle.`;
       return { platform: 'ceo', content: fallback, characterCount: fallback.length, metadata: { hook: fallback.split('.')[0] + '.', cta: '' } };
     } catch {
-      const fallback = `Từ góc nhìn điều hành: hiệu suất ASIC chậm lại đang buộc chúng tôi chuyển giá trị sang tận dụng nhiệt thải, tối ưu trung tâm dữ liệu và hợp đồng năng lượng linh hoạt.`;
+      const fallback = `ASIC efficiency gains are plateauing, forcing us to shift value creation toward waste heat utilization, data center optimization, and flexible energy contracts.`;
       return { platform: 'ceo', content: fallback, characterCount: fallback.length, metadata: { hook: fallback.split('.')[0] + '.', cta: '' } };
     }
   }
@@ -468,7 +468,7 @@ SOCIAL POST:`;
   private buildCEOPrompt(content: LongFormContent): string {
     const { comprehensiveData } = content;
     return `Write a first-person CEO perspective post. Speaker is a data center company CEO. Professional, reflective, operationally grounded. No emojis, no questions, no CTAs.
-    
+
 STRICT FACTUALITY:
 - Do not invent company names or proprietary programs.
 - Do not claim specific locations or assets unless present in the original body.
@@ -483,11 +483,26 @@ DATA CONTEXT (optional to reference cautiously):
 - Renewable share: ${comprehensiveData.sustainability.carbonFootprint.renewableEnergyPercentage || 'N/A'}%
 - PUE context: ${comprehensiveData.sustainability.dataCenterMetrics.pue || 'N/A'}
 
-STYLE:
-- Begin with a clear stance or observation from years in the industry
-- Explain what is shifting operationally and why
-- Share 2-4 practical practices (e.g., heat reuse contracts, demand response, airflow optimization) as generalized strategies
-- Avoid brand names; keep it universally applicable
+STYLE REQUIREMENTS:
+- AVOID generic openings like "As a CEO", "In my experience", "Having worked in this industry"
+- Start with a specific observation, trend, or operational insight
+- Use natural, conversational tone - like talking to a peer
+- Share concrete operational details and strategic thinking
+- Vary sentence structure and length
+- Be direct and authentic, not corporate-speak
+- Focus on what's actually changing in operations and why it matters
+
+EXAMPLE GOOD OPENINGS:
+- "The numbers don't lie: ASIC efficiency gains are plateauing at single-digit percentages annually."
+- "Heat recovery isn't just environmental PR anymore—it's becoming a core revenue stream."
+- "We're seeing a fundamental shift in how miners think about infrastructure ROI."
+
+EXAMPLE BAD OPENINGS (AVOID):
+- "As a CEO with years of experience in the industry..."
+- "In my professional opinion as a data center executive..."
+- "Having worked in this field for many years..."
+
+Write naturally, as if you're sharing insights with a colleague over coffee.
 `;
   }
 
