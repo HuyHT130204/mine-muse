@@ -316,13 +316,45 @@ Operations that embrace this integrated approach will have the competitive edge 
     let socialContent = '';
     
     if (focusAreas.includes('heat') || focusAreas.includes('recycling')) {
-      socialContent = `Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. Operational heat recycling can convert thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes.`;
+      socialContent = `Bitcoin mining's evolution from simple hash generation to integrated energy systems represents a fundamental shift in how we think about digital infrastructure. The industry's transition toward waste heat utilization isn't merely environmental posturing—it's becoming a core competitive advantage that separates profitable operations from marginal ones.
+
+The technical mechanics of heat recovery in mining operations reveal sophisticated engineering challenges. Converting ASIC-generated thermal energy into useful applications requires precise temperature management, efficient heat exchangers, and strategic partnerships with local energy consumers. This isn't simple waste disposal; it's creating new revenue streams while improving overall system efficiency.
+
+From an operational standpoint, successful heat recovery programs demonstrate how mining facilities can evolve into community energy assets. District heating systems, greenhouse operations, and industrial processes benefit from consistent, reliable thermal energy that would otherwise be wasted. The economic implications extend beyond direct revenue—these programs often improve community relations and regulatory standing.
+
+The strategic implications for mining operators are profound. As ASIC efficiency gains plateau, competitive advantages increasingly come from operational intelligence rather than raw computing power. Operators who master energy integration, waste utilization, and community engagement will have sustainable advantages in an increasingly sophisticated market.
+
+Looking forward, the convergence of mining operations with broader energy infrastructure suggests a new paradigm for digital asset production. The most successful operations will likely be those that function as integrated energy systems rather than isolated computing facilities, creating value through multiple revenue streams while maintaining their core Bitcoin production function.`;
     } else if (focusAreas.includes('renewable') || focusAreas.includes('sustainability')) {
-      socialContent = `The renewable energy transition in Bitcoin mining represents more than environmental responsibility—it's becoming a competitive advantage. Operators are discovering that stranded energy assets offer opportunities for both profitability and community impact.`;
+      socialContent = `The renewable energy transition in Bitcoin mining represents more than environmental responsibility—it's becoming a fundamental competitive advantage that's reshaping the entire industry landscape. This shift isn't driven solely by regulatory pressure or public relations concerns; it's emerging from pure economic logic and operational necessity.
+
+The technical integration of renewable energy sources with mining operations reveals complex engineering and economic challenges. Solar and wind installations require sophisticated energy storage systems, grid integration protocols, and flexible load management strategies. The most successful renewable mining operations aren't simply buying green energy credits—they're building integrated energy systems that optimize both Bitcoin production and grid stability.
+
+From a strategic perspective, renewable energy adoption in mining creates multiple competitive moats. Operators with renewable assets gain predictable energy costs, improved regulatory standing, and enhanced community relations. These advantages compound over time, creating sustainable competitive positions that are difficult for traditional operators to replicate.
+
+The economic implications extend far beyond direct energy cost savings. Renewable mining operations often qualify for government incentives, carbon credit programs, and preferential grid access. These additional revenue streams can significantly improve overall profitability while reducing regulatory risk exposure.
+
+The future of Bitcoin mining will likely be dominated by operators who understand that energy infrastructure is as important as computing infrastructure. The most successful operations will be those that function as integrated energy systems, creating value through multiple revenue streams while maintaining their core Bitcoin production function.`;
     } else if (focusAreas.includes('data') || focusAreas.includes('costs')) {
-      socialContent = `Data center optimization is emerging as the new frontier in Bitcoin mining efficiency. While ASIC performance improvements have plateaued, infrastructure intelligence continues to deliver competitive advantages.`;
-      } else {
-      socialContent = `Bitcoin mining is evolving beyond simple hash generation. Operators are building integrated energy systems that serve communities while securing the network, emphasizing infrastructure, sustainability, and operational efficiency.`;
+      socialContent = `Data center optimization is emerging as the new frontier in Bitcoin mining efficiency, representing a fundamental shift from pure computing power to holistic operational intelligence. While ASIC performance improvements have plateaued at single-digit annual gains, infrastructure optimization continues to deliver significant competitive advantages.
+
+The technical aspects of data center optimization in mining operations encompass everything from cooling system efficiency to power distribution management. Advanced monitoring systems, predictive maintenance protocols, and intelligent load balancing create operational advantages that compound over time. This isn't just about reducing costs—it's about creating more reliable, efficient, and profitable operations.
+
+From an economic standpoint, data center optimization creates multiple value streams beyond simple cost reduction. Improved efficiency reduces energy consumption, extends equipment lifespan, and enables more flexible operational strategies. These advantages become particularly important during market volatility when operational flexibility can mean the difference between profitability and losses.
+
+The strategic implications for mining operators are significant. As the industry matures, competitive advantages increasingly come from operational excellence rather than access to cheap hardware. Operators who master data center optimization, energy management, and infrastructure intelligence will have sustainable advantages in an increasingly sophisticated market.
+
+Looking forward, the convergence of data center technology with Bitcoin mining suggests a new paradigm for digital infrastructure. The most successful operations will likely be those that function as integrated computing and energy systems, creating value through multiple revenue streams while maintaining their core Bitcoin production function.`;
+    } else {
+      socialContent = `Bitcoin mining is evolving beyond simple hash generation into a sophisticated industry that integrates computing, energy, and community infrastructure. This transformation represents more than technological advancement—it's a fundamental reimagining of how digital assets are produced and how value is created in the digital economy.
+
+The technical evolution of mining operations reveals increasingly complex systems that require expertise across multiple disciplines. From ASIC optimization to energy management, from data center design to community engagement, successful mining operations now demand integrated approaches that go far beyond basic computing power.
+
+From an operational perspective, modern mining facilities function as integrated energy systems that serve multiple purposes. They provide computing power for Bitcoin production, energy services for local communities, and grid stability services for regional power systems. This multi-purpose approach creates value through multiple revenue streams while improving overall system efficiency.
+
+The strategic implications for the industry are profound. As Bitcoin mining matures, competitive advantages increasingly come from operational intelligence, energy integration, and community engagement rather than simple access to cheap electricity or hardware. The most successful operators will be those who understand that mining is fundamentally about energy transformation and value creation.
+
+The future of Bitcoin mining will likely be dominated by operators who recognize that their facilities are not just computing centers, but integrated energy and community infrastructure. The most successful operations will be those that create value through multiple revenue streams while maintaining their core Bitcoin production function, representing a new paradigm for digital asset production.`;
     }
 
     return {
@@ -427,7 +459,7 @@ LINKEDIN POST:`;
   private buildSocialPrompt(content: LongFormContent): string {
     const { comprehensiveData } = content;
     
-    return `Create a combined Instagram/Facebook post (single text works on both). Professional, narrative-first. No emojis. No questions. No CTAs.
+    return `Create a comprehensive Instagram/Facebook post (single text works on both). Professional, analytical, and thorough. No emojis. No questions. No CTAs.
 
 ORIGINAL CONTENT:
 Title: ${content.title}
@@ -440,27 +472,48 @@ ${Number.isFinite(comprehensiveData.sustainability.carbonFootprint.renewableEner
 ${Number.isFinite(comprehensiveData.sustainability.dataCenterMetrics.pue) && comprehensiveData.sustainability.dataCenterMetrics.pue > 0 ? `- PUE: ${comprehensiveData.sustainability.dataCenterMetrics.pue}` : ''}
 ${Number.isFinite(comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice) && comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice > 0 ? `- Break-even: $${comprehensiveData.sustainability.miningEconomics.profitabilityMetrics.breakEvenPrice.toLocaleString()}` : ''}
 
-HUMAN STYLE (avoid robotic tone):
-- Warm, human cadence; two short paragraphs are fine.
-- Prefer examples and operational vignettes to buzzwords.
-- Avoid marketing-y transitions and cliches.
-
-STYLE REQUIREMENTS:
+WRITING REQUIREMENTS:
 - Write like a senior industry analyst, not a marketing bot
-- Professional, engaging tone with specific data points
-- Use industry terminology naturally
+- Professional, analytical tone with comprehensive analysis
+- Use industry terminology naturally and precisely
 - Avoid naming specific companies unless present in the long-form body or validated sources
-- Focus on practical applications and real-world impact
+- Focus on practical applications, real-world impact, and strategic implications
 - NO QUESTIONS OR CALL-TO-ACTION
 - NO EMOJIS OR ICONS
-- Tell a STORY, not just list numbers
-- Be conversational and natural
+- Tell a compelling STORY with logical progression
+- Be conversational yet authoritative
 
-EXAMPLE STYLE: "Bitcoin mining already transforms stranded energy into value; now, heat recovery takes it a step further. At Bitzero, our operational heat recycling program converts thermal energy into community heating solutions, monetizing what was once considered waste into applications like district heating for greenhouses, pools, food drying, and industrial processes."
+CONTENT STRUCTURE (4-6 paragraphs):
+1. **Opening Hook**: Start with a compelling observation or trend
+2. **Context & Analysis**: Provide detailed background and current state
+3. **Technical Deep Dive**: Explain the mechanics, processes, or systems involved
+4. **Strategic Implications**: Discuss what this means for the industry
+5. **Future Outlook**: Project forward-looking insights and trends
+6. **Conclusion**: Synthesize key points with actionable insights
+
+HUMAN STYLE (avoid robotic tone):
+- Use natural, flowing cadence with varied sentence lengths
+- Prefer concrete examples and operational details over abstract concepts
+- Build logical arguments with clear cause-and-effect relationships
+- Avoid marketing cliches and generic transitions
+- Use specific, experiential language that demonstrates expertise
+- Create narrative flow that guides readers through complex concepts
+
+EXAMPLE STYLE: "Bitcoin mining's evolution from simple hash generation to integrated energy systems represents a fundamental shift in how we think about digital infrastructure. The industry's transition toward waste heat utilization isn't merely environmental posturing—it's becoming a core competitive advantage that separates profitable operations from marginal ones.
+
+The technical mechanics of heat recovery in mining operations reveal sophisticated engineering challenges. Converting ASIC-generated thermal energy into useful applications requires precise temperature management, efficient heat exchangers, and strategic partnerships with local energy consumers. This isn't simple waste disposal; it's creating new revenue streams while improving overall system efficiency.
+
+From an operational standpoint, successful heat recovery programs demonstrate how mining facilities can evolve into community energy assets. District heating systems, greenhouse operations, and industrial processes benefit from consistent, reliable thermal energy that would otherwise be wasted. The economic implications extend beyond direct revenue—these programs often improve community relations and regulatory standing.
+
+The strategic implications for mining operators are profound. As ASIC efficiency gains plateau, competitive advantages increasingly come from operational intelligence rather than raw computing power. Operators who master energy integration, waste utilization, and community engagement will have sustainable advantages in an increasingly sophisticated market.
+
+Looking forward, the convergence of mining operations with broader energy infrastructure suggests a new paradigm for digital asset production. The most successful operations will likely be those that function as integrated energy systems rather than isolated computing facilities, creating value through multiple revenue streams while maintaining their core Bitcoin production function."
 
 STRICT FACTUALITY:
-- Do not invent company names or specific metrics.
-- Use cautious language where precision is uncertain.
+- Do not invent company names or specific metrics
+- Use cautious language where precision is uncertain
+- Ground all claims in the provided context or general industry knowledge
+- If referencing specific data, ensure it's clearly sourced
 
 SOCIAL POST:`;
   }
@@ -468,7 +521,7 @@ SOCIAL POST:`;
   private buildCEOPrompt(content: LongFormContent): string {
     const { comprehensiveData } = content;
     return `Write a first-person CEO perspective post. Speaker is a data center company CEO. Professional, reflective, operationally grounded. No emojis, no questions, no CTAs.
-
+    
 STRICT FACTUALITY:
 - Do not invent company names or proprietary programs.
 - Do not claim specific locations or assets unless present in the original body.
